@@ -62,6 +62,16 @@ export class UIController {
         }
 
         const scheduleAutohide = (e) => {
+            // Do NOT reveal top or bottom bars on Spacebar press/hold or while 2x boost is active!
+            if (e && e.type === 'keydown') {
+                const isSpace = e.code === 'Space' || e.key === ' ' || e.keyCode === 32;
+                if (isSpace) return;
+            }
+
+            if (window.VidAmpSpeed && window.VidAmpSpeed.holdBoostEngaged) {
+                return;
+            }
+
             showUI();
             clearTimeout(this.idleTimer);
 

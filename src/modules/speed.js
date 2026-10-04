@@ -268,6 +268,17 @@ export class SpeedController {
         }
         this.video.playbackRate = 2.0;
 
+        // Ensure upside bar (titlebar) and downside bar (dock) stay hidden while holding for 2x
+        const isFS = document.body.classList.contains('is-fullscreen') || !!document.fullscreenElement;
+        if (isFS) {
+            const titlebar = document.getElementById('titlebar');
+            const dock = document.getElementById('below-video-dock');
+            if (titlebar) titlebar.classList.add('autohide');
+            if (dock) dock.classList.add('autohide');
+            document.body.classList.add('idle-cursor');
+            document.body.style.cursor = 'none';
+        }
+
         const indicator = document.getElementById('hold-boost-indicator');
         if (indicator) indicator.classList.add('visible');
         return true;

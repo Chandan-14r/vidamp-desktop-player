@@ -33,6 +33,16 @@ export class UIController {
             document.body.style.cursor = 'default';
         };
 
+        const hideUI = () => {
+            if (titlebar) titlebar.classList.add('autohide');
+            if (dock) dock.classList.add('autohide');
+            document.body.classList.add('idle-cursor');
+            document.body.style.cursor = 'none';
+        };
+
+        this.showUI = showUI;
+        this.hideUI = hideUI;
+
         const hideExitPill = () => {
             if (fsExitPill && !fsExitPill.matches(':hover')) {
                 fsExitPill.classList.remove('visible');
@@ -62,36 +72,85 @@ export class UIController {
         }
 
         const scheduleAutohide = (e) => {
-            // Do NOT reveal top or bottom bars on Spacebar press/hold or while 2x boost is active!
+            // Do NOT reveal top or bottom bars on Spacebar press/hold
             if (e && e.type === 'keydown') {
                 const isSpace = e.code === 'Space' || e.key === ' ' || e.keyCode === 32;
                 if (isSpace) return;
             }
 
-            if (window.VidAmpSpeed && window.VidAmpSpeed.holdBoostEngaged) {
-                return;
+            // Do NOT reveal top or bottom bars when clicking or pressing on the video stage / video area!
+            if (e && e.type === 'mousedown') {
+                if (e.target && (e.target.closest('#video-stage') || e.target.closest('#video-element') || e.target.closest('#ambient-glow-canvas') || e.target.closest('#cinema-overlay') || e.target.closest('#subtitle-overlay'))) {
+                    return;
+                }
             }
 
-            showUI();
-            clearTimeout(this.idleTimer);
+            // Do NOT reveal top or bottom bars during 2x speed hold, hold pending, or within 1.2s of releasing!
+            const sp = window.VidAmpSpeed;
+            if (sp) {
+                if (sp.holdBoostEngaged || sp.isPointerDownOnStage || sp.isHoldBoostPending) {
+                    return;
+                }
+                if (Date.now() - (sp.lastHoldBoostEndTime || 0) < 1200) {
+                    return;
+                }
+            }
 
             const isFS = document.body.classList.contains('is-fullscreen') || !!document.fullscreenElement;
             const video = window.VidAmpApp ? window.VidAmpApp.video : null;
             const isPlaying = video && !video.paused;
+
+            // In Fullscreen mode:
+            // Top and bottom bars should NOT appear on general mouse movement across the video!
+            // Only reveal them if:
+            // 1) Cursor moves to top titlebar zone (clientY <= 65)
+            // 2) Cursor moves to bottom dock zone (clientY >= innerHeight - 85)
+            // 3) Cursor is interacting with a popover, drawer, modal, or dock button
+            // 4) Or the video is paused
+            if (isFS && isPlaying && e && e.type === 'mousemove') {
+                const winH = window.innerHeight;
+                const isOverTopBar = e.clientY <= 65;
+                const isOverBottomBar = e.clientY >= (winH - 85);
+                const isOverUI = e.target && (e.target.closest('#titlebar') || e.target.closest('#below-video-dock') || e.target.closest('.drawer') || e.target.closest('.modal-backdrop') || e.target.closest('.dock-popover') || e.target.closest('.fullscreen-exit-pill'));
+
+                if (!isOverTopBar && !isOverBottomBar && !isOverUI) {
+                    // Moving cursor across the video in fullscreen:
+                    // Keep cursor visible momentarily, but keep upside and downside bars autohidden!
+                    document.body.classList.remove('idle-cursor');
+                    document.body.style.cursor = 'default';
+
+                    clearTimeout(this.idleTimer);
+                    this.idleTimer = setTimeout(() => {
+                        const drawerStillOpen = document.querySelector('.drawer.open');
+                        const modalStillOpen = document.querySelector('.modal-backdrop.open');
+                        const popoverStillOpen = document.querySelector('#speed-popover.visible, #bookmark-popover.visible, #aspect-popover.visible, #filter-popover.visible');
+                        if (drawerStillOpen || modalStillOpen || popoverStillOpen) return;
+
+                        if (titlebar) titlebar.classList.add('autohide');
+                        if (dock) dock.classList.add('autohide');
+                        document.body.classList.add('idle-cursor');
+                        document.body.style.cursor = 'none';
+                    }, 1800);
+                    return;
+                }
+            }
+
+            showUI();
+            clearTimeout(this.idleTimer);
 
             // In fullscreen mode during playback, automatically hide UI when idle
             if (isFS && isPlaying) {
                 // Check if user is interacting with drawers, modals, or popovers
                 const drawerOpen = document.querySelector('.drawer.open');
                 const modalOpen = document.querySelector('.modal-backdrop.open');
-                const popoverOpen = document.querySelector('#speed-popover.visible, #bookmark-popover.visible');
+                const popoverOpen = document.querySelector('#speed-popover.visible, #bookmark-popover.visible, #aspect-popover.visible, #filter-popover.visible');
 
                 if (drawerOpen || modalOpen || popoverOpen) return;
 
                 this.idleTimer = setTimeout(() => {
                     const drawerStillOpen = document.querySelector('.drawer.open');
                     const modalStillOpen = document.querySelector('.modal-backdrop.open');
-                    const popoverStillOpen = document.querySelector('#speed-popover.visible, #bookmark-popover.visible');
+                    const popoverStillOpen = document.querySelector('#speed-popover.visible, #bookmark-popover.visible, #aspect-popover.visible, #filter-popover.visible');
                     if (drawerStillOpen || modalStillOpen || popoverStillOpen) return;
 
                     if (titlebar) titlebar.classList.add('autohide');
@@ -133,7 +192,10 @@ export class UIController {
             // NEVER show exit pill on entering fullscreen
             if (fsExitPill) fsExitPill.classList.remove('visible');
             clearTimeout(pillHideTimer);
-            scheduleAutohide();
+            if (titlebar) titlebar.classList.add('autohide');
+            if (dock) dock.classList.add('autohide');
+            document.body.classList.add('idle-cursor');
+            document.body.style.cursor = 'none';
         });
 
         window.addEventListener('fullscreen-exited', () => {

@@ -27,6 +27,10 @@ export class SpeedController {
         this.holdBoostRestoreRate = 1.0;
         this.holdBoostWasPaused = false;
         this.holdTimer = null;
+        this.isPointerDownOnStage = false;
+        this.isHoldBoostPending = false;
+        this.lastHoldBoostEndTime = 0;
+        this.suppressNextClick = false;
 
         this.onSpeedChangeCallbacks = [];
         this.onToastCallback = null;
@@ -313,27 +317,51 @@ export class SpeedController {
         this.mouseDownTime = 0;
         this.lastHoldBoostEndTime = 0;
         this.suppressNextClick = false;
+        this.isPointerDownOnStage = false;
+        this.isHoldBoostPending = false;
 
         viewport.addEventListener('mousedown', e => {
-            if (e.button !== 0 || e.target.closest('#below-video-dock') || e.target.closest('.drawer') || e.target.closest('.modal-backdrop')) {
+            if (e.button !== 0 || e.target.closest('#below-video-dock') || e.target.closest('.drawer') || e.target.closest('.modal-backdrop') || e.target.closest('.dock-popover')) {
                 return;
             }
+
+            // If a previous video click timer was scheduled (e.g. from quick first tap in a double-tap-hold gesture), cancel it so it doesn't pause the video!
+            if (window.VidAmpApp && typeof window.VidAmpApp.cancelVideoClick === 'function') {
+                window.VidAmpApp.cancelVideoClick();
+            }
+
+            this.isPointerDownOnStage = true;
+            this.isHoldBoostPending = true;
             this.mouseDownTime = Date.now();
+
+            // Proactively keep upside bar and downside bar autohidden in fullscreen
+            const isFS = document.body.classList.contains('is-fullscreen') || !!document.fullscreenElement;
+            if (isFS) {
+                const titlebar = document.getElementById('titlebar');
+                const dock = document.getElementById('below-video-dock');
+                if (titlebar) titlebar.classList.add('autohide');
+                if (dock) dock.classList.add('autohide');
+            }
+
             clearTimeout(this.holdTimer);
             this.holdTimer = setTimeout(() => {
+                this.isHoldBoostPending = false;
                 this.startHoldBoost();
-            }, 250);
+            }, 230);
         });
 
         window.addEventListener('mouseup', () => {
             clearTimeout(this.holdTimer);
             const heldDuration = this.mouseDownTime ? (Date.now() - this.mouseDownTime) : 0;
+            const wasEngaged = this.holdBoostEngaged;
+            this.isPointerDownOnStage = false;
+            this.isHoldBoostPending = false;
 
-            if (this.holdBoostEngaged) {
+            if (wasEngaged) {
                 this.endHoldBoost();
                 this.suppressNextClick = true;
                 this.lastHoldBoostEndTime = Date.now();
-            } else if (heldDuration >= 250) {
+            } else if (heldDuration >= 230) {
                 // If held longer than tap threshold, mark as long press release so click doesn't pause
                 this.suppressNextClick = true;
                 this.lastHoldBoostEndTime = Date.now();
@@ -341,10 +369,17 @@ export class SpeedController {
             this.mouseDownTime = 0;
         });
 
+        window.addEventListener('blur', () => {
+            if (this.holdBoostEngaged) this.endHoldBoost();
+            this.isPointerDownOnStage = false;
+            this.isHoldBoostPending = false;
+            clearTimeout(this.holdTimer);
+        });
+
         // Capture phase to intercept and suppress the trailing click event after a long-press release
         window.addEventListener('click', e => {
             const timeSinceHoldEnd = Date.now() - this.lastHoldBoostEndTime;
-            if (this.suppressNextClick || timeSinceHoldEnd < 450) {
+            if (this.suppressNextClick || timeSinceHoldEnd < 600) {
                 this.suppressNextClick = false;
                 e.stopPropagation();
                 e.stopImmediatePropagation();

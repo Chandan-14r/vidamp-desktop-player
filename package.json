@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "package": "npx @electron/packager . \"VidAmp Player\" --platform=win32 --arch=x64 --out=dist-app --overwrite --icon=public/icons/icon.ico --asar --prune=true --ignore=\"^(src|docs|screenshots|.git|.vscode|dist-app)\"",
+    "package": "npx @electron/packager . \"VidAmp Player\" --platform=win32 --arch=x64 --out=dist-app --overwrite --icon=public/icons/icon.ico --asar --prune=true --ignore=\"^(src|docs|screenshots|\\.git|\\.vscode|dist-app|.*\\.zip$|.*\\.lnk$)\"",
     "start": "electron electron/main.js",
     "app": "vite build && electron electron/main.js"
   },

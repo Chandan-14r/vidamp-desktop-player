@@ -33,17 +33,20 @@ export class UIController {
             document.body.style.cursor = 'default';
         };
 
-        const triggerPillWith5sTimeout = () => {
+        const hideExitPill = () => {
+            if (fsExitPill && !fsExitPill.matches(':hover')) {
+                fsExitPill.classList.remove('visible');
+            }
+        };
+
+        const showExitPill = () => {
             if (!fsExitPill) return;
             fsExitPill.classList.add('visible');
-            if (titlebar) titlebar.classList.remove('autohide');
 
             clearTimeout(pillHideTimer);
             pillHideTimer = setTimeout(() => {
-                if (fsExitPill && !fsExitPill.matches(':hover')) {
-                    fsExitPill.classList.remove('visible');
-                }
-            }, 5000); // Popup automatically exits after 5 seconds!
+                hideExitPill();
+            }, 3500);
         };
 
         if (fsExitPill) {
@@ -53,8 +56,8 @@ export class UIController {
             fsExitPill.addEventListener('mouseleave', () => {
                 clearTimeout(pillHideTimer);
                 pillHideTimer = setTimeout(() => {
-                    if (fsExitPill) fsExitPill.classList.remove('visible');
-                }, 2000);
+                    hideExitPill();
+                }, 800);
             });
         }
 
@@ -93,7 +96,7 @@ export class UIController {
         window.addEventListener('mousedown', scheduleAutohide);
         window.addEventListener('keydown', scheduleAutohide);
 
-        // When mouse moves upward / near top edge, pop down the Wrong / Exit Arrow pill for 5 seconds!
+        // ONLY show the Exit Fullscreen pill when the user brings their mouse to the TOP-MIDDLE of the screen
         window.addEventListener('mousemove', (e) => {
             const isFS = document.body.classList.contains('is-fullscreen') || !!document.fullscreenElement;
             if (!isFS) {
@@ -102,19 +105,24 @@ export class UIController {
                 return;
             }
 
-            const screenMiddle = window.innerHeight / 2;
-            const movingUpward = e.clientY < lastY;
-            lastY = e.clientY;
+            const winW = window.innerWidth;
+            // Target region: Top 36px, centered horizontally within middle 30% of screen
+            const inTopMiddleZone = e.clientY <= 36 && e.clientX >= (winW * 0.35) && e.clientX <= (winW * 0.65);
 
-            // Trigger when moving upward in the upper half of the screen ("upward of the middle") or hovering top zone
-            if (e.clientY < 60) {
-                triggerPillWith5sTimeout();
-            } else if (movingUpward && e.clientY < screenMiddle) {
-                triggerPillWith5sTimeout();
+            if (inTopMiddleZone) {
+                showExitPill();
+            } else if (fsExitPill && fsExitPill.classList.contains('visible') && !fsExitPill.matches(':hover')) {
+                // If cursor leaves the top area, hide it
+                if (e.clientY > 75 || Math.abs(e.clientX - (winW / 2)) > 260) {
+                    hideExitPill();
+                }
             }
         });
 
         window.addEventListener('fullscreen-entered', () => {
+            // NEVER show exit pill on entering fullscreen
+            if (fsExitPill) fsExitPill.classList.remove('visible');
+            clearTimeout(pillHideTimer);
             scheduleAutohide();
         });
 

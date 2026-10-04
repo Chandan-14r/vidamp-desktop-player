@@ -393,7 +393,19 @@ export class CreatorTools {
         }
 
         const btn = document.getElementById('tb-sleep');
+        const badge = document.getElementById('tb-sleep-badge');
         if (btn) btn.classList.toggle('active', this.sleepOptions[this.sleepIndex] !== 0);
+        if (badge) {
+            if (mins === 0) {
+                badge.style.display = 'none';
+            } else if (mins === -1) {
+                badge.textContent = 'END';
+                badge.style.display = 'block';
+            } else {
+                badge.textContent = `${mins}m`;
+                badge.style.display = 'block';
+            }
+        }
     }
 
     executeSleepFade() {
@@ -409,6 +421,8 @@ export class CreatorTools {
                 this.sleepIndex = 0;
                 const btn = document.getElementById('tb-sleep');
                 if (btn) btn.classList.remove('active');
+                const badge = document.getElementById('tb-sleep-badge');
+                if (badge) badge.style.display = 'none';
             }
         }, 200);
     }

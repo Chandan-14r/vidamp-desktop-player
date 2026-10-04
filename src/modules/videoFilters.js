@@ -15,14 +15,17 @@ export class VideoFiltersEngine {
             contrast: 100,
             saturate: 100,
             hueRotate: 0,
-            invert: 0
+            invert: 0,
+            sepia: 0
         };
 
         this.presets = [
-            { id: 'normal', name: 'Normal (Reset)', b: 100, c: 100, s: 100 },
-            { id: 'hdr', name: 'HDR Boost', b: 105, c: 118, s: 125 },
-            { id: 'night', name: 'Night Mode', b: 85, c: 95, s: 85 },
-            { id: 'contrast', name: 'High Contrast', b: 100, c: 130, s: 110 }
+            { id: 'normal', name: 'Normal (Reset)', b: 100, c: 100, s: 100, hue: 0, invert: 0, sepia: 0, icon: '🔄' },
+            { id: 'night-vision', name: 'Night Vision (Military Phosphor)', b: 155, c: 170, s: 280, hue: 95, invert: 0, sepia: 0, icon: '🟢' },
+            { id: 'night-warm', name: 'Night Warmth (OLED Eye-Care)', b: 92, c: 100, s: 95, hue: 0, invert: 0, sepia: 40, icon: '🌙' },
+            { id: 'hdr', name: 'HDR Vivid Boost', b: 110, c: 125, s: 135, hue: 0, invert: 0, sepia: 0, icon: '⚡' },
+            { id: 'contrast', name: 'High Dynamic Contrast', b: 112, c: 145, s: 110, hue: 0, invert: 0, sepia: 0, icon: '🔥' },
+            { id: 'thermal', name: 'Thermal / Invert Vision', b: 100, c: 110, s: 120, hue: 180, invert: 100, sepia: 0, icon: '👁️' }
         ];
         this.presetIndex = 0;
 
@@ -40,20 +43,23 @@ export class VideoFiltersEngine {
     }
 
     init(videoEl) {
-        this.video = videoEl;
+        this.video = videoEl || document.getElementById('video-element');
+        this.apply();
     }
 
     apply() {
+        if (!this.video) this.video = document.getElementById('video-element');
         if (!this.video) return;
 
         // 1. CSS Filter String
-        const { brightness, contrast, saturate, hueRotate, invert } = this.filters;
+        const { brightness, contrast, saturate, hueRotate, invert, sepia } = this.filters;
         const filterParts = [];
         if (brightness !== 100) filterParts.push(`brightness(${brightness}%)`);
         if (contrast !== 100) filterParts.push(`contrast(${contrast}%)`);
         if (saturate !== 100) filterParts.push(`saturate(${saturate}%)`);
         if (hueRotate !== 0) filterParts.push(`hue-rotate(${hueRotate}deg)`);
         if (invert !== 0) filterParts.push(`invert(${invert}%)`);
+        if (sepia && sepia !== 0) filterParts.push(`sepia(${sepia}%)`);
 
         this.video.style.filter = filterParts.join(' ');
 
@@ -68,6 +74,24 @@ export class VideoFiltersEngine {
 
         this.video.style.objectFit = aspect.fit;
         this.video.style.transform = transformParts.join(' ');
+
+        // Update Button Active state
+        const btnFilters = document.getElementById('tb-filters');
+        if (btnFilters) {
+            const isCustom = this.presets[this.presetIndex] && this.presets[this.presetIndex].id !== 'normal';
+            btnFilters.classList.toggle('active', isCustom);
+        }
+
+        // Update Popover Active Pills
+        const curPresetId = this.presets[this.presetIndex] ? this.presets[this.presetIndex].id : 'normal';
+        document.querySelectorAll('#filters-popover .sp-pill').forEach(pill => {
+            pill.classList.toggle('active', pill.getAttribute('data-filter') === curPresetId);
+        });
+
+        const curAspectId = this.aspectModes[this.aspectIndex] ? this.aspectModes[this.aspectIndex].id : 'contain';
+        document.querySelectorAll('#aspect-popover .sp-pill').forEach(pill => {
+            pill.classList.toggle('active', pill.getAttribute('data-aspect') === curAspectId);
+        });
     }
 
     adjustBrightness(delta, onToast) {
@@ -76,23 +100,52 @@ export class VideoFiltersEngine {
         if (onToast) onToast(`☀️ Brightness: ${this.filters.brightness}%`);
     }
 
+    setPresetById(id, onToast) {
+        const idx = this.presets.findIndex(p => p.id === id);
+        if (idx !== -1) {
+            this.presetIndex = idx;
+            const p = this.presets[idx];
+            this.filters.brightness = p.b;
+            this.filters.contrast = p.c;
+            this.filters.saturate = p.s;
+            this.filters.hueRotate = p.hue || 0;
+            this.filters.invert = p.invert || 0;
+            this.filters.sepia = p.sepia || 0;
+            this.apply();
+            if (onToast) onToast(`${p.icon} Filter: ${p.name}`);
+        }
+    }
+
     cyclePreset(onToast) {
         this.presetIndex = (this.presetIndex + 1) % this.presets.length;
         const p = this.presets[this.presetIndex];
         this.filters.brightness = p.b;
         this.filters.contrast = p.c;
         this.filters.saturate = p.s;
+        this.filters.hueRotate = p.hue || 0;
+        this.filters.invert = p.invert || 0;
+        this.filters.sepia = p.sepia || 0;
         this.apply();
-        if (onToast) onToast(`✨ Filter: ${p.name}`);
+        if (onToast) onToast(`${p.icon} Filter: ${p.name}`);
     }
 
     reset(onToast) {
-        this.filters = { brightness: 100, contrast: 100, saturate: 100, hueRotate: 0, invert: 0 };
+        this.setPresetById('normal', onToast);
         this.rotation = 0;
         this.flipH = false;
         this.flipV = false;
         this.apply();
         if (onToast) onToast('🎨 Filters & Geometry Reset');
+    }
+
+    setAspectById(id, onToast) {
+        const idx = this.aspectModes.findIndex(a => a.id === id);
+        if (idx !== -1) {
+            this.aspectIndex = idx;
+            const mode = this.aspectModes[idx];
+            this.apply();
+            if (onToast) onToast(`📐 Aspect: ${mode.label}`);
+        }
     }
 
     cycleAspectRatio(onToast) {

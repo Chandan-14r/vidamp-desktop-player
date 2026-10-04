@@ -81,6 +81,7 @@ class VidAmpPlayerApp {
         window.VidAmpUI = new UIController();
 
         // Initialize modules safely
+        try { window.VidAmpAudio.init(this.video); } catch (e) { console.error('Audio init:', e); }
         try { window.VidAmpAmbient.init(this.canvasAmbient, this.video); } catch (e) { console.error('Ambient init:', e); }
         try {
             window.VidAmpSpeed.init(
@@ -979,73 +980,128 @@ class VidAmpPlayerApp {
 
     // Toolbar Controls
     bindToolbarEvents() {
-        document.getElementById('btn-play-pause').onclick = () => this.togglePlay();
+        const hideAllPopovers = () => {
+            document.querySelectorAll('.tb-popover').forEach(p => p.classList.remove('visible'));
+        };
+
+        // Close popovers when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.tb-popover') && !e.target.closest('.tb-btn') && !e.target.closest('.tb-speed-btn')) {
+                hideAllPopovers();
+            }
+        });
+
+        const btnPlayPause = document.getElementById('btn-play-pause');
+        if (btnPlayPause) btnPlayPause.onclick = () => this.togglePlay();
 
         // Loop Whole Video
         const btnLoop = document.getElementById('tb-loop');
-        btnLoop.onclick = () => {
-            this.video.loop = !this.video.loop;
-            btnLoop.classList.toggle('active', this.video.loop);
-            this.showToast(this.video.loop ? '🔁 Loop: ON' : '🔁 Loop: OFF');
-        };
+        if (btnLoop) {
+            btnLoop.onclick = () => {
+                this.video.loop = !this.video.loop;
+                btnLoop.classList.toggle('active', this.video.loop);
+                this.showToast(this.video.loop ? '🔁 Loop: ON' : '🔁 Loop: OFF');
+            };
+        }
 
-        // Volume Boost (100% -> 150% -> 200%)
+        // Volume Boost (100% -> 150% -> 200% -> 250% -> 100%)
         const btnVolBoost = document.getElementById('tb-volboost');
-        btnVolBoost.onclick = () => {
-            const curVol = window.VidAmpAudio.volume;
-            let nextVol = 1.0;
-            if (curVol <= 1.05) nextVol = 1.5;
-            else if (curVol <= 1.55) nextVol = 2.0;
-            else nextVol = 1.0;
+        if (btnVolBoost) {
+            btnVolBoost.onclick = () => {
+                const curVol = window.VidAmpAudio ? window.VidAmpAudio.volume : 1.0;
+                let nextVol = 1.0;
+                if (curVol <= 1.05) nextVol = 1.5;
+                else if (curVol <= 1.55) nextVol = 2.0;
+                else if (curVol <= 2.05) nextVol = 2.5;
+                else nextVol = 1.0;
 
-            window.VidAmpAudio.applyVolume(nextVol, (msg) => this.showToast(msg));
-            btnVolBoost.classList.toggle('active', nextVol > 1.0);
-        };
+                if (window.VidAmpAudio) {
+                    window.VidAmpAudio.applyVolume(nextVol, (msg) => this.showToast(msg));
+                }
+            };
+            btnVolBoost.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpAudio) {
+                    window.VidAmpAudio.applyVolume(1.0, (msg) => this.showToast(msg));
+                }
+            };
+        }
 
         // Bass & Vocal EQ
         const btnBass = document.getElementById('tb-bass');
-        btnBass.onclick = () => {
-            const active = window.VidAmpAudio.toggleBassBoost((msg) => this.showToast(msg));
-            btnBass.classList.toggle('active-glow', active);
-        };
-        btnBass.oncontextmenu = (e) => {
-            e.preventDefault();
-            const active = window.VidAmpAudio.toggleVocalBoost((msg) => this.showToast(msg));
-            btnBass.classList.toggle('active-violet', active);
-        };
+        if (btnBass) {
+            btnBass.onclick = () => {
+                if (window.VidAmpAudio) {
+                    window.VidAmpAudio.toggleBassBoost((msg) => this.showToast(msg));
+                }
+            };
+            btnBass.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpAudio) {
+                    window.VidAmpAudio.toggleVocalBoost((msg) => this.showToast(msg));
+                }
+            };
+        }
 
-        // Cinema Mode
+        // Night Mode Dialogue Clarity
+        const btnSpeech = document.getElementById('tb-speech');
+        if (btnSpeech) {
+            btnSpeech.onclick = () => {
+                if (window.VidAmpAudio) {
+                    window.VidAmpAudio.toggleNightModeDialogue((msg) => this.showToast(msg));
+                }
+            };
+        }
+
+        // Cinema Mode (True Theater Dimming)
         const btnCinema = document.getElementById('tb-cinema');
         const cinemaOverlay = document.getElementById('cinema-overlay');
-        btnCinema.onclick = () => {
-            cinemaOverlay.classList.toggle('visible');
-            btnCinema.classList.toggle('active', cinemaOverlay.classList.contains('visible'));
+        const toggleCinema = () => {
+            const isCinema = document.body.classList.toggle('cinema-active');
+            if (cinemaOverlay) cinemaOverlay.classList.toggle('visible', isCinema);
+            if (btnCinema) btnCinema.classList.toggle('active', isCinema);
+            this.showToast(isCinema ? '🎬 Cinema Mode: ON (Theater Lights Dimmed)' : '🎬 Cinema Mode: OFF');
         };
-        cinemaOverlay.onclick = () => {
-            cinemaOverlay.classList.remove('visible');
-            btnCinema.classList.remove('active');
-        };
+        if (btnCinema) btnCinema.onclick = toggleCinema;
+        if (cinemaOverlay) cinemaOverlay.onclick = toggleCinema;
 
         // Ambient Glow
         const btnAmbient = document.getElementById('tb-ambient');
-        btnAmbient.onclick = () => {
-            const active = window.VidAmpAmbient.toggle((msg) => this.showToast(msg));
-            btnAmbient.classList.toggle('active', active);
-        };
-        if (window.VidAmpAmbient.active) {
-            btnAmbient.classList.add('active');
+        if (btnAmbient) {
+            btnAmbient.onclick = () => {
+                if (window.VidAmpAmbient) {
+                    const active = window.VidAmpAmbient.toggle((msg) => this.showToast(msg));
+                    btnAmbient.classList.toggle('active', active);
+                }
+            };
+            if (window.VidAmpAmbient && window.VidAmpAmbient.active) {
+                btnAmbient.classList.add('active');
+            }
         }
 
         // Fullscreen
-        document.getElementById('tb-theater').onclick = () => this.toggleFullscreen();
+        const btnTheater = document.getElementById('tb-theater');
+        if (btnTheater) btnTheater.onclick = () => this.toggleFullscreen();
 
         // PiP
-        document.getElementById('tb-pip').onclick = () => this.togglePiP();
+        const btnPip = document.getElementById('tb-pip');
+        if (btnPip) btnPip.onclick = () => this.togglePiP();
 
-        // Aspect Ratio
-        document.getElementById('tb-aspect').onclick = () => {
-            window.VidAmpFilters.cycleAspectRatio((msg) => this.showToast(msg));
-        };
+        // Aspect Ratio: Click opens Popover, Right-click resets to standard 16:9
+        const btnAspect = document.getElementById('tb-aspect');
+        const aspectPopover = document.getElementById('aspect-popover');
+        if (btnAspect) {
+            btnAspect.onclick = (e) => {
+                e.stopPropagation();
+                const wasVis = aspectPopover && aspectPopover.classList.contains('visible');
+                hideAllPopovers();
+                if (aspectPopover && !wasVis) aspectPopover.classList.add('visible');
+            };
+            btnAspect.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpFilters) window.VidAmpFilters.setAspectById('contain', (msg) => this.showToast(msg));
+            };
+        }
 
         // Rotate 90° & Mirror Flip
         const btnRotate = document.getElementById('tb-rotate');
@@ -1062,30 +1118,51 @@ class VidAmpPlayerApp {
         // Speed Pill Click -> Popover
         const btnSpeed = document.getElementById('tb-speed');
         const speedPopover = document.getElementById('speed-popover');
-        btnSpeed.onclick = (e) => {
-            e.stopPropagation();
-            speedPopover.classList.toggle('visible');
-            document.getElementById('bookmark-popover').classList.remove('visible');
-        };
-        btnSpeed.oncontextmenu = (e) => {
-            e.preventDefault();
-            window.VidAmpSpeed.reset();
-        };
+        if (btnSpeed) {
+            btnSpeed.onclick = (e) => {
+                e.stopPropagation();
+                const wasVis = speedPopover && speedPopover.classList.contains('visible');
+                hideAllPopovers();
+                if (speedPopover && !wasVis) speedPopover.classList.add('visible');
+            };
+            btnSpeed.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpSpeed) window.VidAmpSpeed.reset();
+            };
+        }
 
-        // Filter Preset Cycle
-        document.getElementById('tb-filters').onclick = () => {
-            window.VidAmpFilters.cyclePreset((msg) => this.showToast(msg));
-        };
+        // Filter Preset: Click opens Popover (with Night Vision, OLED, HDR, etc.), Right-click cycles
+        const btnFilters = document.getElementById('tb-filters');
+        const filtersPopover = document.getElementById('filters-popover');
+        if (btnFilters) {
+            btnFilters.onclick = (e) => {
+                e.stopPropagation();
+                const wasVis = filtersPopover && filtersPopover.classList.contains('visible');
+                hideAllPopovers();
+                if (filtersPopover && !wasVis) filtersPopover.classList.add('visible');
+            };
+            btnFilters.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpFilters) window.VidAmpFilters.cyclePreset((msg) => this.showToast(msg));
+            };
+        }
 
         // Screenshot Capture
-        document.getElementById('tb-screenshot').onclick = () => {
-            window.VidAmpTools.captureScreenshot(this.currentMedia ? this.currentMedia.fileName : 'VidAmp');
-        };
+        const btnScreenshot = document.getElementById('tb-screenshot');
+        if (btnScreenshot) {
+            btnScreenshot.onclick = () => {
+                if (window.VidAmpTools) {
+                    window.VidAmpTools.captureScreenshot(this.currentMedia ? this.currentMedia.fileName : 'VidAmp');
+                }
+            };
+        }
 
         // A-B Loop & Clip Export
         const btnAbLoop = document.getElementById('tb-abloop');
         if (btnAbLoop) {
-            btnAbLoop.onclick = () => window.VidAmpTools.cycleLoopAB();
+            btnAbLoop.onclick = () => {
+                if (window.VidAmpTools) window.VidAmpTools.cycleLoopAB();
+            };
             btnAbLoop.oncontextmenu = (e) => {
                 e.preventDefault();
                 this.openClipExportModal();
@@ -1137,25 +1214,34 @@ class VidAmpPlayerApp {
         // Bookmarks Popover Toggle
         const btnBookmark = document.getElementById('tb-bookmark');
         const bmPopover = document.getElementById('bookmark-popover');
-        btnBookmark.onclick = (e) => {
-            e.stopPropagation();
-            bmPopover.classList.toggle('visible');
-            speedPopover.classList.remove('visible');
-        };
-        btnBookmark.oncontextmenu = (e) => {
-            e.preventDefault();
-            window.VidAmpTools.addBookmark();
-        };
+        if (btnBookmark) {
+            btnBookmark.onclick = (e) => {
+                e.stopPropagation();
+                const wasVis = bmPopover && bmPopover.classList.contains('visible');
+                hideAllPopovers();
+                if (bmPopover && !wasVis) bmPopover.classList.add('visible');
+            };
+            btnBookmark.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (window.VidAmpTools) window.VidAmpTools.addBookmark();
+            };
+        }
 
         // Sleep Timer
-        document.getElementById('tb-sleep').onclick = () => {
-            window.VidAmpTools.cycleSleepTimer();
-        };
+        const btnSleep = document.getElementById('tb-sleep');
+        if (btnSleep) {
+            btnSleep.onclick = () => {
+                if (window.VidAmpTools) window.VidAmpTools.cycleSleepTimer();
+            };
+        }
 
         // Pro Tools & Settings Drawer
-        document.getElementById('tb-settings').onclick = () => {
-            this.toggleDrawer('eq-drawer');
-        };
+        const btnSettings = document.getElementById('tb-settings');
+        if (btnSettings) {
+            btnSettings.onclick = () => {
+                this.toggleDrawer('eq-drawer');
+            };
+        }
     }
 
     onSpeedChanged(rate) {

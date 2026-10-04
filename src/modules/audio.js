@@ -22,6 +22,7 @@ export class AudioController {
         this.analyser = null;
         this.videoEl = null;
 
+        this.bassLevel = 0; // 0: off, 1: punch +9dB, 2: heavy +15dB
         this.bassBoostActive = false;
         this.vocalBoostActive = false;
         this.nightModeActive = false;
@@ -35,21 +36,30 @@ export class AudioController {
 
         this.presets = {
             flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            bass: [8, 7, 5, 2, 0, 0, 0, 0, 0, 0],
-            vocal: [-3, -1, 0, 2, 5, 6, 4, 2, 0, 0],
-            movie: [5, 3, 1, 2, 4, 5, 3, 2, 1, 0],
-            rock: [6, 4, 2, -1, -2, 1, 3, 5, 6, 6],
-            pop: [-1, 1, 3, 4, 3, 0, -1, 1, 3, 4],
+            bass: [9, 8, 6, 2, 0, 0, 0, 0, 0, 0],
+            vocal: [-3, -1, 0, 2, 6, 8, 5, 2, 0, 0],
+            movie: [5, 3, 1, 2, 5, 6, 4, 2, 1, 0],
+            rock: [7, 5, 2, -1, -2, 1, 4, 6, 7, 7],
+            pop: [-1, 2, 4, 5, 4, 0, -1, 2, 4, 5],
             classical: [5, 4, 3, 2, -1, -1, 0, 2, 3, 4],
-            club: [0, 0, 3, 5, 5, 5, 3, 0, 0, 0],
-            night: [-6, -4, -2, 0, 2, 2, 1, -1, -3, -5]
+            club: [0, 0, 4, 6, 6, 6, 4, 0, 0, 0],
+            night: [-6, -4, -2, 0, 3, 3, 2, -1, -3, -5]
         };
 
         this.visualizerAnimationId = null;
     }
 
+    init(videoEl) {
+        this.videoEl = videoEl || document.getElementById('video-element');
+        this.updateButtonsUI();
+    }
+
     ensureContext(video) {
-        if (this.ctx && this.source && this.videoEl === video) {
+        const targetVideo = video || this.videoEl || document.getElementById('video-element');
+        if (!targetVideo) return false;
+        this.videoEl = targetVideo;
+
+        if (this.ctx && this.source) {
             if (this.ctx.state === 'suspended') {
                 this.ctx.resume().catch(() => {});
             }
@@ -57,29 +67,28 @@ export class AudioController {
         }
 
         try {
-            this.videoEl = video;
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if (!AudioCtx) return false;
 
             this.ctx = new AudioCtx();
-            this.source = this.ctx.createMediaElementSource(video);
+            this.source = this.ctx.createMediaElementSource(this.videoEl);
 
             // 1. Audio Delay Node (for VLC-style audio sync correction)
             this.delayNode = this.ctx.createDelay(5.0);
             this.delayNode.delayTime.value = Math.max(0, this.audioDelayMs / 1000);
 
-            // 2. Low-shelf filter for Bass Boost (+7dB at 140Hz)
+            // 2. Low-shelf filter for Bass Boost (+9dB or +15dB)
             this.bassFilter = this.ctx.createBiquadFilter();
             this.bassFilter.type = 'lowshelf';
-            this.bassFilter.frequency.value = 140;
-            this.bassFilter.gain.value = this.bassBoostActive ? 7.0 : 0.0;
+            this.bassFilter.frequency.value = this.bassLevel === 2 ? 80 : 120;
+            this.bassFilter.gain.value = this.bassLevel === 2 ? 15.0 : (this.bassLevel === 1 ? 9.0 : 0.0);
 
-            // 3. Peaking filter for Vocal Clarity (+6dB at 2500Hz, Q=1.0)
+            // 3. Peaking filter for Vocal Clarity (+8dB at 2500Hz, Q=1.2)
             this.vocalFilter = this.ctx.createBiquadFilter();
             this.vocalFilter.type = 'peaking';
             this.vocalFilter.frequency.value = 2500;
-            this.vocalFilter.Q.value = 1.0;
-            this.vocalFilter.gain.value = this.vocalBoostActive ? 6.0 : 0.0;
+            this.vocalFilter.Q.value = 1.2;
+            this.vocalFilter.gain.value = this.vocalBoostActive ? 8.0 : 0.0;
 
             // 4. 10-Band Studio Graphic Equalizer
             this.eqFilters = this.eqFrequencies.map((freq, i) => {
@@ -101,9 +110,9 @@ export class AudioController {
 
             // 6. Limiter / DynamicsCompressor to prevent digital distortion at 200%
             this.limiterNode = this.ctx.createDynamicsCompressor();
-            this.limiterNode.threshold.value = -6.0;
-            this.limiterNode.knee.value = 12.0;
-            this.limiterNode.ratio.value = 12.0;
+            this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -6.0;
+            this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 12.0;
+            this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 12.0;
             this.limiterNode.attack.value = 0.003;
             this.limiterNode.release.value = 0.25;
 
@@ -159,14 +168,14 @@ export class AudioController {
     }
 
     applyVolume(volumeLevel, onToast) {
-        if (!this.videoEl) return;
+        this.videoEl = this.videoEl || document.getElementById('video-element');
         const effectiveVol = Math.max(0, Math.min(this.volumeBoostLimit, volumeLevel));
         this.volume = effectiveVol;
 
         const level20 = Math.round(effectiveVol * 20);
 
         if (effectiveVol <= 1.0) {
-            this.videoEl.volume = effectiveVol;
+            if (this.videoEl) this.videoEl.volume = effectiveVol;
             if (this.gainNode) {
                 this.gainNode.gain.value = 1.0;
             }
@@ -174,25 +183,30 @@ export class AudioController {
                 if (level20 === 0) {
                     onToast('🔇 Volume: 0 / 20 (Muted)');
                 } else if (level20 === 20) {
-                    onToast('🔊 Volume: 20 / 20 (Full Sound)');
+                    onToast('🔊 Volume: 20 / 20 (100%)');
                 } else {
-                    onToast(`🔊 Volume: ${level20} / 20`);
+                    onToast(`🔊 Volume: ${level20} / 20 (${Math.round(effectiveVol * 100)}%)`);
                 }
             }
         } else {
             this.ensureContext(this.videoEl);
-            this.videoEl.volume = 1.0;
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            if (this.videoEl) this.videoEl.volume = 1.0;
             if (this.gainNode) {
                 this.gainNode.gain.value = effectiveVol;
                 if (onToast) onToast(`🚀 Volume Boost: ${level20} / 20 (${Math.round(effectiveVol * 100)}%)`);
             } else {
-                if (onToast) onToast('🔊 Volume: 20 / 20 (Full Sound)');
+                if (onToast) onToast('🔊 Volume: 20 / 20 (100%)');
             }
         }
 
-        if (effectiveVol > 0 && this.videoEl.muted) {
+        if (this.videoEl && effectiveVol > 0 && this.videoEl.muted) {
             this.videoEl.muted = false;
         }
+
+        this.updateButtonsUI();
 
         if (this.onVolumeChangeCallbacks && this.onVolumeChangeCallbacks.length) {
             this.onVolumeChangeCallbacks.forEach(cb => {
@@ -202,47 +216,94 @@ export class AudioController {
     }
 
     toggleBassBoost(onToast) {
-        if (!this.videoEl) return false;
+        this.videoEl = this.videoEl || document.getElementById('video-element');
         this.ensureContext(this.videoEl);
-        this.bassBoostActive = !this.bassBoostActive;
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+
+        // 3-stage toggle: 0 (Off) -> 1 (Punch +9dB) -> 2 (Heavy Sub +15dB) -> 0 (Off)
+        this.bassLevel = (this.bassLevel + 1) % 3;
+        this.bassBoostActive = this.bassLevel > 0;
+
         if (this.bassFilter) {
-            this.bassFilter.gain.value = this.bassBoostActive ? 7.0 : 0.0;
+            if (this.bassLevel === 1) {
+                this.bassFilter.frequency.value = 120;
+                this.bassFilter.gain.value = 9.0;
+            } else if (this.bassLevel === 2) {
+                this.bassFilter.frequency.value = 80;
+                this.bassFilter.gain.value = 15.0;
+            } else {
+                this.bassFilter.frequency.value = 140;
+                this.bassFilter.gain.value = 0.0;
+            }
         }
+
+        const btn = document.getElementById('tb-bass');
+        const badge = document.getElementById('tb-bass-badge');
+        if (btn) {
+            btn.classList.toggle('active-glow', this.bassLevel > 0);
+        }
+        if (badge) {
+            if (this.bassLevel === 1) {
+                badge.textContent = '+9dB';
+                badge.style.display = 'block';
+            } else if (this.bassLevel === 2) {
+                badge.textContent = '+15dB';
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
         if (onToast) {
-            onToast(this.bassBoostActive ? '🔊 Bass Boost: ON (+7dB)' : '🔊 Bass Boost: OFF');
+            if (this.bassLevel === 1) onToast('🔊 Bass Boost: PUNCH (+9dB)');
+            else if (this.bassLevel === 2) onToast('🔊 Bass Boost: HEAVY SUB-BASS (+15dB)');
+            else onToast('🔊 Bass Boost: OFF (Flat)');
         }
-        return this.bassBoostActive;
+        return this.bassLevel;
     }
 
     toggleVocalBoost(onToast) {
-        if (!this.videoEl) return false;
+        this.videoEl = this.videoEl || document.getElementById('video-element');
         this.ensureContext(this.videoEl);
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+
         this.vocalBoostActive = !this.vocalBoostActive;
         if (this.vocalFilter) {
-            this.vocalFilter.gain.value = this.vocalBoostActive ? 6.0 : 0.0;
+            this.vocalFilter.gain.value = this.vocalBoostActive ? 8.0 : 0.0;
         }
+
+        const btn = document.getElementById('tb-bass');
+        if (btn) {
+            btn.classList.toggle('active-violet', this.vocalBoostActive);
+        }
+
         if (onToast) {
-            onToast(this.vocalBoostActive ? '🎙️ Vocal Clarity: ON (+6dB)' : '🎙️ Vocal Clarity: OFF');
+            onToast(this.vocalBoostActive ? '🎙️ Vocal Clarity: ON (+8dB Speech)' : '🎙️ Vocal Clarity: OFF');
         }
         return this.vocalBoostActive;
     }
 
     toggleNightModeDialogue(onToast) {
-        if (!this.videoEl) return false;
+        this.videoEl = this.videoEl || document.getElementById('video-element');
         this.ensureContext(this.videoEl);
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+
         this.nightModeActive = !this.nightModeActive;
 
         if (this.limiterNode) {
-            // Night mode dynamic range compression (DRC):
-            // Threshold: -28dB, ratio: 18:1, smooth knee: 30
-            // Suppresses loud gunshot/explosion spikes while lifting quiet voices
             this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -6.0;
             this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 12.0;
             this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 12.0;
         }
 
         if (this.vocalFilter) {
-            const boost = this.nightModeActive ? 7.0 : (this.vocalBoostActive ? 6.0 : 0.0);
+            const boost = this.nightModeActive ? 8.0 : (this.vocalBoostActive ? 8.0 : 0.0);
             this.vocalFilter.gain.value = boost;
         }
 
@@ -251,11 +312,32 @@ export class AudioController {
 
         if (onToast) {
             onToast(this.nightModeActive
-                ? '🌙 Dialogue Clarity: ON (Tames explosions, boosts speech)'
+                ? '🌙 Dialogue Clarity: ON (Night Mode DRC)'
                 : '🌙 Dialogue Clarity: OFF'
             );
         }
         return this.nightModeActive;
+    }
+
+    updateButtonsUI() {
+        const btnVolBoost = document.getElementById('tb-volboost');
+        const badgeVolBoost = document.getElementById('tb-volboost-badge');
+        if (btnVolBoost) {
+            btnVolBoost.classList.toggle('active', this.volume > 1.05);
+        }
+        if (badgeVolBoost) {
+            if (this.volume > 1.05) {
+                badgeVolBoost.textContent = `${Math.round(this.volume * 100)}%`;
+                badgeVolBoost.style.display = 'block';
+            } else {
+                badgeVolBoost.style.display = 'none';
+            }
+        }
+
+        const slider = document.getElementById('inline-volume-slider');
+        if (slider) {
+            slider.value = Math.min(20, Math.round(this.volume * 20));
+        }
     }
 
     // Audio Delay Sync (VLC J/K keys ±50ms)

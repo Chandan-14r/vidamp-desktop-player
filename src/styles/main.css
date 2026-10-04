@@ -1101,8 +1101,8 @@ body.is-fullscreen #fullscreen-exit-pill.visible,
     height: 13px;
 }
 
-/* Speed Presets Popover */
-#speed-popover, #bookmark-popover, #jump-popover {
+/* Popovers & Toolbars */
+#speed-popover, #bookmark-popover, #jump-popover, #filters-popover, #aspect-popover, .tb-popover {
     position: absolute;
     bottom: calc(100% + 8px);
     left: 50%;
@@ -1120,10 +1120,36 @@ body.is-fullscreen #fullscreen-exit-pill.visible,
     pointer-events: auto;
 }
 
-#speed-popover.visible, #bookmark-popover.visible, #jump-popover.visible {
+#speed-popover.visible, #bookmark-popover.visible, #jump-popover.visible, #filters-popover.visible, #aspect-popover.visible, .tb-popover.visible {
     display: block;
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.tb-badge {
+    position: absolute;
+    top: -5px;
+    right: -4px;
+    background: var(--accent-cyan);
+    color: #080d1a;
+    font-size: 8.5px;
+    font-weight: 800;
+    font-family: var(--font-mono, monospace);
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 9999px;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+#tb-bass-badge {
+    background: var(--accent-amber);
+    color: #1a1002;
+}
+#tb-sleep-badge {
+    background: var(--accent-violet);
+    color: #ffffff;
 }
 
 .sp-list {
@@ -1199,23 +1225,38 @@ body.is-fullscreen #fullscreen-exit-pill.visible,
 }
 
 /* =========================================================
-   Cinema Mode Overlay
+   Cinema Mode (True Theater Dimming)
    ========================================================= */
 
 #cinema-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.92);
-    z-index: 1;
-    pointer-events: none;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 35;
+    pointer-events: auto;
     opacity: 0;
     display: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.35s ease;
 }
 
 #cinema-overlay.visible {
     display: block;
     opacity: 1;
+}
+
+body.cinema-active #titlebar,
+body.cinema-active #below-video-dock {
+    opacity: 0.06;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.cinema-active #titlebar:hover,
+body.cinema-active #below-video-dock:hover {
+    opacity: 1;
+}
+
+body.cinema-active #app-container {
+    background: #000000 !important;
 }
 
 /* =========================================================

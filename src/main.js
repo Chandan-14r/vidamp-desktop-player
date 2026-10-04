@@ -754,7 +754,6 @@ class VidAmpPlayerApp {
     seekDelta(delta) {
         if (!this.video || !Number.isFinite(this.video.duration)) return;
         this.video.currentTime = Math.max(0, Math.min(this.video.duration, this.video.currentTime + delta));
-        this.showToast(this.formatTime(this.video.currentTime));
     }
 
     stepFrame(direction) {

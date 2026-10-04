@@ -1,11 +1,37 @@
 # ⚡ VidAmp Player: The Ultimate Standalone PC Video Player
 
 <div align="center">
-  <img src="public/icons/icon512.png" width="128" height="128" alt="VidAmp Logo" style="border-radius: 28px; box-shadow: 0 12px 36px rgba(56, 189, 248, 0.45);" />
+  <img src="public/icons/icon512.png" width="132" height="132" alt="VidAmp Logo" style="border-radius: 28px; box-shadow: 0 16px 40px rgba(255, 75, 43, 0.35);" />
   <h2>VidAmp Player — Standalone PC Video Player</h2>
-  <p><strong>Powered by Electron + Vite + HTML5 Web Audio & Canvas APIs for Windows</strong></p>
-  <p><em>Combining VidAmp's precision algorithms with the legendary power features of VLC Media Player and MPC-HC.</em></p>
+  <p><strong>Powered by Electron + Vite + HTML5 Web Audio & Direct3D11 Acceleration for Windows</strong></p>
+  <p><em>Combining VidAmp's precision gesture controls with the legendary power features of VLC Media Player and MPC-HC.</em></p>
+
+  <p>
+    <a href="https://github.com/Chandan-14r/vidamp-desktop-player/releases/latest"><img src="https://img.shields.io/github/v/release/Chandan-14r/vidamp-desktop-player?style=for-the-badge&color=2563eb&label=Release" alt="Latest Release" /></a>
+    <a href="https://chandanrs.itch.io/vidamp-player"><img src="https://img.shields.io/badge/Itch.io-VidAmp%20Player-fa5c5c?style=for-the-badge&logo=itchdotio&logoColor=white" alt="Itch.io" /></a>
+    <img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078d4?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11" />
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License" /></a>
+  </p>
+
+  <p>
+    <em>Precision exponential gestures • 10-Band studio audio EQ • Universal dynamic ambient glow • OpenSubtitles auto-fetch • Dual-audio track switcher • Always-on-top Mini PiP • 1-Click GIF / clip exporter • D3D11 HDR tone mapping</em>
+  </p>
 </div>
+
+---
+
+## 📦 Downloads & Installation
+
+No complex installers or dependencies required. Choose your preferred download source:
+
+| Platform / Source | Link | Format | Size |
+|:---|:---|:---|:---|
+| 🐙 **GitHub Releases** | [**Download VidAmp-Player-v1.0.0-win64.zip**](https://github.com/Chandan-14r/vidamp-desktop-player/releases/tag/v1.0.0) | Portable `.zip` | ~163 MB |
+| 🎮 **Itch.io Store** | [**Visit VidAmp on Itch.io**](https://chandanrs.itch.io/vidamp-player) | Direct Download | ~163 MB |
+
+> [!TIP]
+> **Quick Start**: Extract the `.zip` archive to any directory on your PC and double-click **`VidAmp Player.exe`**.  
+> *(If Windows SmartScreen appears on first launch, click **More info** $\rightarrow$ **Run anyway**).*
 
 ---
 
@@ -18,18 +44,18 @@ vidamp-desktop-player/
 ├── electron/
 │   ├── main.js              # Electron main process (native dialogs, window scaling, frameless Mica/acrylic)
 │   ├── preload.js           # Secure IPC bridge (scaleWindow, saveScreenshot, saveClip, openDialogs)
-│   └── icons/               # High-res application icons (16, 48, 128, 512)
+│   └── icons/               # Multi-resolution application icons (16, 32, 48, 64, 128, 256, 512, .ico)
 ├── src/
 │   ├── styles/
 │   │   └── main.css         # Obsidian glassmorphic theme, 0% overlap dock, and neon accents
 │   ├── modules/
 │   │   ├── audio.js         # 200% boost + limiter, bass boost +7dB, vocal peak +6dB, 10-band EQ, audio delay sync (J/K)
 │   │   ├── ambient.js       # Universal dynamic bias lighting canvas (32x18 GPU blur sampler)
-│   │   ├── speed.js         # Snap-to-grid ([ and ]), two-finger trackpad gesture, 1-click popover, hold-to-boost
-│   │   ├── subtitles.js     # SRT/VTT/ASS parser, VLC-style G/H delay sync, and custom styling
-│   │   ├── videoFilters.js  # Color filters (HDR, Night, Contrast), aspect ratio switcher, rotation & mirror flip
+│   │   ├── speed.js         # Snap-to-grid ([ and ]), exponential gestures, 1-click popover, hold-to-boost
+│   │   ├── subtitles.js     # OpenSubtitles REST auto-fetch, SRT/VTT/ASS parser, VLC-style G/H delay sync
+│   │   ├── videoFilters.js  # Color filters (HDR, OLED, Cinema), aspect ratio switcher, rotation & mirror flip
 │   │   ├── hlsPlayer.js     # HLS (.m3u8) live streams and direct URL network streaming
-│   │   ├── tools.js         # A-B loop repeater, MediaRecorder high-res clip exporter, screenshot saver, bookmarks
+│   │   ├── tools.js         # FFmpeg GIF / MP4 exporter, A-B loop repeater, screenshot saver, bookmarks
 │   │   ├── playlist.js      # Track queue, shuffle, repeat, M3U playlist export, recent history memory
 │   │   ├── mediaInfo.js     # MPC-HC style on-screen stream HUD stats (FPS, codec, resolution, dropped frames)
 │   │   ├── shortcuts.js     # Master VLC, MPC-HC, and VidAmp keyboard & gesture dispatcher
@@ -38,7 +64,6 @@ vidamp-desktop-player/
 ├── index.html               # Main HTML5 viewport & docked layout
 ├── package.json             # Build configuration & dependencies (Electron, Vite, hls.js)
 ├── vite.config.js           # Vite build pipeline
-├── launch-desktop.py        # Universal runner (Electron + standalone desktop window fallback)
 └── start.bat                # One-click Windows launch batch
 ```
 
@@ -58,33 +83,35 @@ vidamp-desktop-player/
   * Exact jump: `Ctrl + J` or `Ctrl + T` to jump to specific `HH:MM:SS`.
 * **Frame-by-Frame Stepping**: Precision frame navigation with `.` (forward 1 frame ~0.033s) and `,` (backward 1 frame).
 * **Guaranteed Spacebar Play/Pause**: Single-toggle action with active element blur protection to prevent button reactivations.
-* **Resume Playback**: Auto-remembers your last watched timestamp on media files and prompts to resume.
+* **Resume Playback & Auto-Next Episode**: Remembers your last watched timestamp on media files and prompts a smart countdown during end credits.
 
 ---
 
-### 2. ⚡ Precision Speed Controller (VidAmp Heritage)
+### 2. ⚡ Precision Gestures & Exponential Speed Controller
+* **Exponential Seeking Gesture**: Dragging horizontally accelerates exponentially across the timeline for lightning-fast long-video navigation.
+* **Calibrated Volume Gesture (0–20 Scale)**: Natural stepped volume control with responsive visual feedback.
+* **Hold Spacebar for 2× Speed**: Press and hold `Spacebar` (or long-click video) to temporarily boost playback to **2.0×**; releasing immediately restores your previous rate.
 * **Snap-to-Grid Stepping (`[` and `]`)**:
   * Press `[`: snaps down on a `0.25×` grid (e.g. `1.4×` $\rightarrow$ `1.25×` $\rightarrow$ `1.0×` $\rightarrow$ `0.75×`).
   * Press `]`: snaps up on a `0.25×` grid (e.g. `1.4×` $\rightarrow$ `1.5×` $\rightarrow$ `1.75×` $\rightarrow$ `2.0×`).
-* **Trackpad Two-Finger & Wheel Speed**: Calibrated `55px` threshold with `0.05×` precision steps ($0.25\times - 2.0\times$), `0.10×` steps ($2.0\times - 4.0\times$), and inertia dampening (`* 0.4`).
 * **1-Click Speed Popover**: Direct 1-click access to presets: `0.25×`, `0.5×`, `0.75×`, `1×`, `1.25×`, `1.4×`, `1.5×`, `1.75×`, `2×`, `2.5×`, `3×`, `4×`.
 * **Instant Reset**: Press `R` or right-click the speed pill to reset immediately to `1.0×`.
-* **Hold-to-2× Boost**: Long-press click on video or hold space for temporary `2.0×` boost; releasing restores your exact previous rate.
-* **Natural Pitch Lock**: Toggle natural pitch preservation on/off.
 
 ---
 
-### 3. 🔊 Studio Audio Suite & VLC Sync
-* **200% - 250% Volume Boost with Limiter**: Web Audio API `DynamicsCompressorNode` (`threshold: -6dB`, `ratio: 12`) prevents clipping and harsh digital distortion even at maximum volume boost.
+### 3. 🔊 Studio Audio Suite & Multi-Track Audio Switcher
+* **Dual-Audio & Multi-Track Switcher**: Detects and switches between alternate language tracks, commentaries, and surround sound channels (`B` shortcut).
+* **200% Safe Volume Boost with Limiter**: Web Audio API `DynamicsCompressorNode` (`threshold: -6dB`, `ratio: 12`) prevents clipping and harsh digital distortion even at maximum volume boost.
 * **Studio Bass Boost (+7dB Low-Shelf)**: Tuned at `140Hz` for deep, cinematic bass.
 * **Vocal Clarity (+6dB Peaking)**: Peaking filter at `2500Hz` (`Q = 1.0`) specifically tuned for podcast, dialogue, and tutorial clarity.
 * **Audio Delay Sync (VLC `J` and `K` keys)**: Shift audio timing by ±50ms per press (range: `-5000ms` to `+5000ms`) to permanently fix out-of-sync audio tracks!
 * **10-Band Graphic Equalizer**: Studio parametric bands (31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz) with presets (Flat, Bass Heavy, Vocal Boost, Rock, Pop, Classical, Movie Dialogue, Club, Night Cinema).
-* **Live Spectrum Visualizer**: Animated frequency analyzer canvas in the Pro Audio drawer.
+* **Live Spectrum Visualizer**: Animated 64-bar frequency analyzer canvas in the Pro Audio drawer.
 
 ---
 
-### 4. 💬 Subtitle Engine (VLC / MPC-HC)
+### 4. 💬 Subtitles & Auto-Fetch Engine
+* **Auto-Fetch Online Subtitles**: Search and download subtitles directly from OpenSubtitles with auto-decompression and auto-naming.
 * **Format Support**: Loads external `.srt`, `.vtt`, `.ass`, `.sub` files via file picker or drag-and-drop.
 * **Subtitle Delay Sync (VLC `G` and `H` keys)**: Adjust subtitle timing by ±50ms increments to fix delayed subtitles.
 * **Custom Styling**: Clean, high-legibility subtitle overlay with customizable font size, outline, and contrast background.
@@ -92,51 +119,23 @@ vidamp-desktop-player/
 
 ---
 
-### 5. 🌌 Visual Enhancements & Post-Processing
-* **Universal Ambient Glow (Dynamic Bias Lighting)**: GPU-accelerated `32×18` canvas sampler projecting a glowing halo (`blur(65px) saturate(2.2) brightness(1.2)`) behind the player frame with $<0.2\text{ms}$ GPU draw time.
+### 5. 🌌 Visual Enhancements, GPU Diagnostics & HDR Tone Mapping
+* **Dynamic Ambient Glow (Dynamic Bias Lighting)**: GPU-accelerated `32×18` canvas sampler projecting a glowing halo (`blur(65px) saturate(2.2) brightness(1.2)`) behind the player frame with $<0.2\text{ms}$ GPU draw time.
+* **Hardware Acceleration Diagnostics**: Zero-copy Chromium GPU rasterization with live FPS, frame time, and Direct3D11 diagnostics modal.
+* **HDR Tone-Mapping Curves**: Instant cycle between BT.2020 HDR Passthrough, Cinema Contrast, and OLED Ultra-Black modes.
 * **Cinema Mode**: Dims the entire environment with a dark veil, spotlighting only the active video.
-* **Aspect Ratio Switcher**: Cycle between 16:9 Standard Fit, 21:9 Ultrawide Crop (`scale(1.33)`), Stretch-to-Fill, and 4:3 Classic TV Fit.
-* **Video Color Filters**: Instant cycle between HDR Boost, Night Warm Mode, High Contrast, and Normal (Reset).
+* **Aspect Ratio Switcher**: Cycle between 16:9 Standard Fit, 21:9 Ultrawide Crop, Stretch-to-Fill, and 4:3 Classic TV Fit.
 * **Video Rotation & Mirror Flip**: Rotate 90°, 180°, 270°, and Horizontal Mirror Flip (essential for dancing, sports, and tutorials).
 
 ---
 
-### 6. ⏱️ Creator & Study Tools
+### 6. ⏱️ Creator Tools, GIF Exporter & Mini PiP
+* **1-Click GIF / MP4 Clip Exporter**: High-resolution palette-generated GIF and MP4 export from A-B loops with customizable resolution (480p, 720p, Source).
+* **Always-On-Top Mini PiP Controller (`Shift + P`)**: Borderless corner floating window with playback controls.
 * **A-B Loop Repeater**: Mark Loop Point A and Point B on the timeline to repeat any scene or segment indefinitely.
-* **High-Res Mini-Clip Exporter**: Directly records and exports the active A-B loop segment as a high-quality `.webm` video download using `captureStream()` and `MediaRecorder`.
 * **Frame Capture / Screenshot**: Saves native full-resolution video frame screenshots directly to your Windows Pictures directory (`VidAmp_Clip_14s.png`).
 * **Timestamp Bookmarks**: Save moments with `Shift + B`; popover jump list lets you seek back to any bookmark with 1 click.
 * **Sleep Timer**: Auto-pause with gentle 3-second volume fade (15m, 30m, 45m, 60m, or Stop at Video End). Shortcut: `Shift + S`.
-
----
-
-### 7. 🖥️ Window Management & Stream HUD (MPC-HC)
-* **Window Scaling (MPC-HC `Alt + 1`, `Alt + 2`, `Alt + 3`)**:
-  * `Alt + 1`: 50% Half Size
-  * `Alt + 2`: 100% Original 1:1 Video Size
-  * `Alt + 3`: 200% Double Size
-* **Stream HUD Stats (`I` key)**: Displays real-time resolution, framerate, video codec, audio sample rate, aspect ratio, duration, dropped frames, and sync offsets.
-* **Always-on-Top Pin**: Keep VidAmp Player on top of other windows while working or gaming.
-
----
-
-### 8. 🎛️ Enhancer Below-Video Toolbar (0% Video Overlap)
-Docked strictly BELOW the video viewport:
-* 🔁 **Loop Video**
-* 🔊 **200% Volume Booster**
-* 🎚️ **Studio EQ** (Click: Bass `+7dB`, Right-Click: Vocal `+6dB`)
-* 🎬 **Cinema Mode** (Dim environment)
-* 🌌 **Ambient Glow** (Bias lighting halo)
-* 🔲 **Fullscreen** (`F`)
-* 🖼️ **Picture-in-Picture** (`P`)
-* 📐 **Aspect Ratio** (16:9, 21:9 Ultrawide, Fill, 4:3)
-* ⚡ **Speed Pill** (Live display + 1-click presets popover)
-* ✨ **Video Filters** (HDR Boost, Night, Contrast)
-* 📸 **Frame Screenshot** (Saves PNG to Pictures)
-* ⚗️ **A-B Loop** (Click: Set A, Set B, Clear; Right-Click: Export Clip)
-* 📌 **Bookmarks** (Save and jump timestamps)
-* 🌙 **Sleep Timer** (15m/30m/45m/60m/End/Off)
-* ⚙️ **Pro Studio Drawer** (`Alt + B`)
 
 ---
 
@@ -144,12 +143,13 @@ Docked strictly BELOW the video viewport:
 
 | Shortcut | Action | Description |
 |:---|:---|:---|
-| `Space` | **Play / Pause** | Guaranteed single toggle without repeat, blurs active element |
-| `[` | **Snap Speed Down** | Snaps down on 0.25 grid (e.g. 1.4x $\rightarrow$ 1.25x $\rightarrow$ 1.0x) |
-| `]` | **Snap Speed Up** | Snaps up on 0.25 grid (e.g. 1.4x $\rightarrow$ 1.5x $\rightarrow$ 1.75x) |
+| `Space` | **Play / Pause** | Single-toggle action without repeat, blurs active element |
+| `Hold Space` / `Long-Click` | **Hold-to-2× Boost** | Temporary 2.0× speed while holding, restores rate on release |
+| `[` | **Snap Speed Down** | Snaps down on 0.25 grid (e.g. 1.4× $\rightarrow$ 1.25× $\rightarrow$ 1.0×) |
+| `]` | **Snap Speed Up** | Snaps up on 0.25 grid (e.g. 1.4× $\rightarrow$ 1.5× $\rightarrow$ 1.75×) |
 | `R` | **Reset Speed** | Instantly restores playback rate to `1.0×` |
-| `Touchpad Scroll` | **Exponential Speed** | Smooth 0.05x precision speed adjustment |
-| `Long-Click Video` | **Hold-to-2× Boost** | 2.0x speed while holding, restores previous rate on release |
+| `B` | **Audio Track Switcher** | Cycle through available audio language/surround tracks |
+| `Shift + P` | **Mini PiP Controller** | Toggle always-on-top borderless corner mini window |
 | `.` or `>` | **Frame Forward** | Steps forward 1 frame (~0.033s) |
 | `,` or `<` | **Frame Backward** | Steps backward 1 frame (~0.033s) |
 | `←` / `→` | **Jump ±5s** | Small jump (VLC standard) |
@@ -161,39 +161,42 @@ Docked strictly BELOW the video viewport:
 | `V` | **Toggle Subtitles** | Show / hide subtitle tracks |
 | `I` | **Stream HUD Stats** | Toggle MPC-HC resolution, FPS, and dropped frames overlay |
 | `Alt + 1 / 2 / 3` | **Scale Window** | 50% / 100% / 200% window scaling (MPC-HC) |
-| `Alt + B` | **Pro Tools Drawer** | Toggle Equalizer, Sync, and Filter drawers |
-| `Alt + T` | **Toggle Docked Bar** | Hide / show below-video toolbar |
-| `Shift + ↑` / `↓` | **Volume Boost** | Adjust volume up to 250% |
+| `Alt + B` | **Pro Tools Drawer** | Toggle Equalizer, Multi-Track, and Filter drawers |
 | `Shift + A` | **Ambient Glow** | Toggle universal dynamic bias lighting |
 | `Shift + B` | **Bookmark Moment** | Save current timestamp to jump list |
 | `Shift + S` | **Sleep Timer** | Cycle sleep timer with volume fade |
 | `F` | **Fullscreen** | Toggle borderless fullscreen |
-| `P` | **Picture-in-Picture** | Float video in native desktop PiP window |
+| `P` | **Picture-in-Picture** | Native browser Picture-in-Picture |
 | `M` | **Mute / Unmute** | Toggle audio mute |
 | `?` | **Cheat Sheet** | Open shortcut help modal |
 
 ---
 
-## 🚀 How to Run
+## 🛠️ Development & Building from Source
 
-### Option 1: One-Click Windows Launcher
-Double-click `start.bat` in the project root:
-```cmd
-cd C:\Users\crs14\.gemini\antigravity\scratch\vidamp-desktop-player
-.\start.bat
-```
-
-### Option 2: Electron Run
 ```bash
-npm start
-```
+# Clone the repository
+git clone https://github.com/Chandan-14r/vidamp-desktop-player.git
+cd vidamp-desktop-player
 
-### Option 3: Vite Dev Server
-```bash
+# Install dependencies
+npm install
+
+# Run development mode
 npm run dev
+
+# Launch desktop app with Electron
+npm start
+
+# Build web release
+npm run build
+
+# Package standalone Windows x64 binary
+npm run package
 ```
 
-### Option 4: Universal Desktop App Window
-```bash
-python launch-desktop.py
-```
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE) © 2026 Chandan.

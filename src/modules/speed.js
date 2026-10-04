@@ -236,7 +236,7 @@ export class SpeedController {
                 const stepUnits = velocity >= 55 ? 2 : 1;
 
                 if (window.VidAmpAudio) {
-                    const currentStep20 = Math.round(window.VidAmpAudio.volume * 20);
+                    const currentStep20 = Math.min(20, Math.max(0, Math.round((window.VidAmpAudio.volume || 1.0) * 20)));
                     const nextStep20 = stepUp 
                         ? Math.min(20, currentStep20 + stepUnits)
                         : Math.max(0, currentStep20 - stepUnits);

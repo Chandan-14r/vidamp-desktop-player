@@ -108,11 +108,11 @@ export class AudioController {
             this.gainNode = this.ctx.createGain();
             this.gainNode.gain.value = this.volume > 1.0 ? this.volume : 1.0;
 
-            // 6. Limiter / DynamicsCompressor to prevent digital distortion at 200%
+            // 6. Limiter / DynamicsCompressor to prevent digital distortion at 200% (transparent ceiling at -0.5dB)
             this.limiterNode = this.ctx.createDynamicsCompressor();
-            this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -6.0;
-            this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 12.0;
-            this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 12.0;
+            this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -0.5;
+            this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 6.0;
+            this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 6.0;
             this.limiterNode.attack.value = 0.003;
             this.limiterNode.release.value = 0.25;
 
@@ -173,9 +173,13 @@ export class AudioController {
         this.volume = effectiveVol;
 
         const level20 = Math.round(effectiveVol * 20);
+        const percent = Math.round(effectiveVol * 100);
 
         if (effectiveVol <= 1.0) {
-            if (this.videoEl) this.videoEl.volume = effectiveVol;
+            // Natural perceptual scaling: ensures volume increases smoothly and progressively across the entire 0-20 scale
+            // Level 10 gives comfortable half-loudness, and levels 11-20 continue distinctly and cleanly up to 100% full volume!
+            const perceptualGain = effectiveVol <= 0 ? 0 : Math.pow(effectiveVol, 1.5);
+            if (this.videoEl) this.videoEl.volume = Math.max(0, Math.min(1.0, perceptualGain));
             if (this.gainNode) {
                 this.gainNode.gain.value = 1.0;
             }
@@ -185,7 +189,7 @@ export class AudioController {
                 } else if (level20 === 20) {
                     onToast('🔊 Volume: 20 / 20 (100%)');
                 } else {
-                    onToast(`🔊 Volume: ${level20} / 20 (${Math.round(effectiveVol * 100)}%)`);
+                    onToast(`🔊 Volume: ${level20} / 20 (${percent}%)`);
                 }
             }
         } else {
@@ -196,7 +200,7 @@ export class AudioController {
             if (this.videoEl) this.videoEl.volume = 1.0;
             if (this.gainNode) {
                 this.gainNode.gain.value = effectiveVol;
-                if (onToast) onToast(`🚀 Volume Boost: ${level20} / 20 (${Math.round(effectiveVol * 100)}%)`);
+                if (onToast) onToast(`🚀 Volume Boost: ${level20} / 20 (${percent}%)`);
             } else {
                 if (onToast) onToast('🔊 Volume: 20 / 20 (100%)');
             }
@@ -297,9 +301,9 @@ export class AudioController {
         this.nightModeActive = !this.nightModeActive;
 
         if (this.limiterNode) {
-            this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -6.0;
-            this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 12.0;
-            this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 12.0;
+            this.limiterNode.threshold.value = this.nightModeActive ? -28.0 : -0.5;
+            this.limiterNode.knee.value = this.nightModeActive ? 30.0 : 6.0;
+            this.limiterNode.ratio.value = this.nightModeActive ? 18.0 : 6.0;
         }
 
         if (this.vocalFilter) {

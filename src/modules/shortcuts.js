@@ -256,15 +256,19 @@ export class ShortcutsManager {
                 return;
             }
 
-            // Volume Up/Down with standard Arrow keys (MPC-HC standard)
+            // Volume Up/Down with standard Arrow keys (MPC-HC standard, 0-20 scale)
             if (e.key === 'ArrowUp' && !e.ctrlKey && !e.altKey) {
                 e.preventDefault();
-                window.VidAmpAudio.applyVolume(window.VidAmpAudio.volume + 0.05, window.VidAmpApp.showToast);
+                const curStep20 = Math.min(20, Math.max(0, Math.round((window.VidAmpAudio.volume || 1.0) * 20)));
+                const nextStep20 = Math.min(20, curStep20 + 1);
+                window.VidAmpAudio.applyVolume(nextStep20 / 20, window.VidAmpApp.showToast);
                 return;
             }
             if (e.key === 'ArrowDown' && !e.ctrlKey && !e.altKey) {
                 e.preventDefault();
-                window.VidAmpAudio.applyVolume(window.VidAmpAudio.volume - 0.05, window.VidAmpApp.showToast);
+                const curStep20 = Math.min(20, Math.max(0, Math.round((window.VidAmpAudio.volume || 1.0) * 20)));
+                const nextStep20 = Math.max(0, curStep20 - 1);
+                window.VidAmpAudio.applyVolume(nextStep20 / 20, window.VidAmpApp.showToast);
                 return;
             }
 

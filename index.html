@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidAmp Player</title>
+    <link rel="icon" type="image/png" href="./public/icons/icon128.png">
+</head>
+<body>
+
+    <!-- Custom Frameless Titlebar (Drag Region) -->
+    <header id="titlebar">
+        <div class="titlebar-left">
+            <div class="app-brand" title="VidAmp Player Pro">
+                <img src="./public/icons/icon128.png" alt="VidAmp Logo">
+                <span class="brand-text">VidAmp</span>
+                <span class="badge">PRO</span>
+            </div>
+            <div class="titlebar-quick-actions">
+                <button class="window-btn" id="btn-open-file" title="Open Media File (Ctrl+O)" onclick="window.VidAmpApp.openFilePicker()">
+                    <svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                </button>
+                <button class="window-btn" id="btn-open-sub" title="Open Subtitles (.srt, .vtt, .ass)" onclick="window.VidAmpApp.openSubtitlePicker()">
+                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M7 10h10M7 13h6"/></svg>
+                </button>
+                <button class="window-btn" id="btn-open-sub-online" title="Auto-Fetch Subtitles (Ctrl+Shift+S)" onclick="window.VidAmpApp.openAutoFetchSubtitles()">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8 11h6M8 14h4"/></svg>
+                </button>
+                <button class="window-btn" id="btn-open-stream" title="Open Network Stream (HLS .m3u8 or URL)" onclick="window.VidAmpApp.openNetworkUrlPrompt()">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="titlebar-center">
+            <div class="now-playing-pill" id="now-playing-pill" title="Current Media">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span class="now-playing-title" id="now-playing-text">VidAmp Player — Open file to start</span>
+            </div>
+        </div>
+
+        <div class="titlebar-right">
+            <button class="window-btn gpu-pill-btn" id="btn-gpu-hdr" title="⚡ Hardware Acceleration & HDR Passthrough Status" onclick="window.VidAmpApp.openGpuDiagnostics()">
+                <span class="gpu-indicator-dot"></span>
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: #38bdf8;">GPU / HDR</span>
+            </button>
+            <button class="window-btn" id="btn-pin-ontop" title="Always on Top (Pin)">
+                <svg viewBox="0 0 24 24"><path d="M12 2v8M5 10h14l-2 9H7l-2-9zM12 19v3"/></svg>
+            </button>
+            <button class="window-btn" id="btn-toggle-playlist" title="Playlist & Queue (Alt+P)" onclick="window.VidAmpApp.toggleDrawer('playlist-drawer')">
+                <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button class="window-btn" id="btn-toggle-history" title="Recent Media & Watch History (Ctrl+H)" onclick="window.VidAmpApp.toggleDrawer('history-drawer')">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <button class="window-btn" id="btn-toggle-eq" title="Studio Equalizer & Filters (Alt+B)" onclick="window.VidAmpApp.toggleDrawer('eq-drawer')">
+                <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            </button>
+            <button class="window-btn" id="btn-hud-info" title="MPC-HC Stream Stats HUD (I)" onclick="window.VidAmpHUD.toggle()">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+            <button class="window-btn" id="btn-shortcuts-help" title="Keyboard & Gesture Shortcuts (?)" onclick="window.VidAmpApp.toggleShortcutsModal()">
+                <svg viewBox="0 0 24 24"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </button>
+
+            <div class="window-controls-divider"></div>
+
+            <button class="window-btn win-ctrl-btn" id="btn-win-min" title="Minimize">
+                <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="window-btn win-ctrl-btn" id="btn-win-max" title="Full Screen (F / Double Click)">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </button>
+            <button class="window-btn win-ctrl-btn btn-close" id="btn-win-close" title="Close">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Fullscreen Pop-Down Exit Pill ("Wrong / Exit Arrow") -->
+    <div id="fullscreen-exit-pill" class="fullscreen-exit-pill">
+        <button class="fs-exit-btn" id="btn-fs-exit" onclick="window.VidAmpApp.toggleFullscreen()" title="Exit Fullscreen (Esc / F)">
+            <span class="fs-exit-icon-wrap" title="Exit Fullscreen">
+                <!-- Wrong / Cross 'X' mark -->
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </span>
+            <!-- Inward Exit Fullscreen Arrows -->
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14h6v6m10-10h-6V4M14 10l7-7M10 14l-7 7"/>
+            </svg>
+            <span style="font-size: 12px; font-weight: 600;">Exit Fullscreen</span>
+            <span class="fs-exit-badge">Esc</span>
+        </button>
+    </div>
+
+    <!-- App Content: Video Stage + Zero-Overlap Docked Bottom Bar -->
+    <div id="app-container">
+        <!-- Video Stage Area -->
+        <main id="video-stage">
+            <!-- Universal Ambient Glow Bias Lighting Canvas -->
+            <canvas id="ambient-glow-canvas"></canvas>
+
+            <!-- Cinema Mode Dimming Overlay -->
+            <div id="cinema-overlay"></div>
+
+            <!-- Video Player -->
+            <video id="video-element" playsinline></video>
+
+            <!-- Subtitle Display Overlay (VLC / MPC-HC) -->
+            <div id="subtitle-overlay"></div>
+
+            <!-- MPC-HC Style Stream HUD Stats -->
+            <div id="media-info-hud"></div>
+
+            <!-- Empty State Drop Target -->
+            <div id="empty-state" onclick="window.VidAmpApp.openFilePicker()">
+                <div class="empty-icon-wrap">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <h2 class="empty-title">VidAmp Player</h2>
+                <p class="empty-subtitle">Universal standalone video player with Studio Audio, Exponential Speed, and VLC/MPC-HC post-processing.</p>
+                <div class="empty-actions" onclick="event.stopPropagation()">
+                    <button class="btn-primary" onclick="window.VidAmpApp.openFilePicker()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                        Open File...
+                    </button>
+                    <button class="btn-secondary" onclick="window.VidAmpApp.openFolderPicker()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        Open Folder...
+                    </button>
+                    <button class="btn-secondary" onclick="window.VidAmpApp.openNetworkUrlPrompt()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        Network Stream...
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drag Over Overlay -->
+            <div id="drag-overlay">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div style="font-size: 18px; font-weight: 700;">Drop video or subtitle file into VidAmp Player</div>
+            </div>
+
+            <!-- Center Play/Pause Flash -->
+            <div id="center-play-indicator">
+                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+
+            <!-- Hold-to-Boost Indicator (YouTube Style) -->
+            <div id="hold-boost-indicator">
+                <span>2x</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 4 15 12 5 20"/>
+                    <polygon points="13 4 23 12 13 20"/>
+                </svg>
+            </div>
+
+            <!-- Double-Tap Seek Ripples (YouTube / MX Player Style) -->
+            <div id="seek-ripple-left" class="seek-ripple-indicator left">
+                <div class="ripple-circle">
+                    <svg viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+                    <span>-10s</span>
+                </div>
+            </div>
+            <div id="seek-ripple-right" class="seek-ripple-indicator right">
+                <div class="ripple-circle">
+                    <svg viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+                    <span>+10s</span>
+                </div>
+            </div>
+
+            <!-- Smart Resume Floating Pill -->
+            <div id="smart-resume-pill" class="smart-resume-card hidden">
+                <div class="sr-icon">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="sr-info">
+                    <span class="sr-text">Resume from <strong id="sr-timestamp">00:00</strong>?</span>
+                </div>
+                <div class="sr-actions">
+                    <button class="sr-btn-resume" id="sr-btn-resume">Resume</button>
+                    <button class="sr-btn-dismiss" id="sr-btn-dismiss" title="Start from beginning">✕</button>
+                </div>
+            </div>
+
+            <!-- Next Episode Countdown Toast (Netflix Style) -->
+            <div id="next-episode-toast" class="next-episode-card hidden">
+                <div class="ne-badge">UP NEXT IN <span id="ne-seconds">5</span>s</div>
+                <div class="ne-title" id="ne-filename">Next Video</div>
+                <div class="ne-progress-bar">
+                    <div class="ne-progress-fill" id="ne-progress-fill"></div>
+                </div>
+                <div class="ne-actions">
+                    <button class="ne-btn-cancel" id="ne-btn-cancel">Cancel</button>
+                    <button class="ne-btn-play" id="ne-btn-play">
+                        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Play Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- OSD Toast Feedback -->
+            <div id="osd-toast">VidAmp Ready</div>
+        </main>
+
+        <!-- Zero-Overlap Docked Bottom Control Bar (Strictly Below Video) -->
+        <footer id="below-video-dock">
+            <!-- Timeline Scrub Bar -->
+            <div id="scrub-bar-container">
+                <div id="scrub-bar-track">
+                    <div id="scrub-buffered"></div>
+                    <div id="scrub-progress"></div>
+                    <div id="scrub-handle"></div>
+                    <div class="loop-flag flag-a" id="loop-flag-a"></div>
+                    <div class="loop-flag flag-b" id="loop-flag-b"></div>
+                </div>
+                <!-- Timeline Hover Thumbnail Preview Bubble -->
+                <div id="scrub-tooltip" class="scrub-thumbnail-preview">
+                    <div class="thumb-canvas-wrap">
+                        <canvas id="thumb-preview-canvas" width="160" height="90"></canvas>
+                    </div>
+                    <span id="thumb-preview-time" class="thumb-time-pill">00:00</span>
+                </div>
+            </div>
+
+            <!-- Controls Row -->
+            <div class="control-row">
+                <div class="control-group-left">
+                    <button class="tb-btn" id="btn-play-pause" title="Play / Pause (Space)">
+                        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <button class="tb-btn" id="btn-prev-track" title="Previous Video" onclick="window.VidAmpPlaylist.playPrevious()">
+                        <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                    </button>
+                    <button class="tb-btn" id="btn-next-track" title="Next Video" onclick="window.VidAmpPlaylist.playNext()">
+                        <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </button>
+                    <div class="time-display" title="Click to toggle remaining time">
+                        <span class="current-time" id="current-time-text">00:00</span>
+                        <span style="opacity: 0.5;"> / </span>
+                        <span id="duration-time-text">00:00</span>
+                    </div>
+                    <div class="volume-control-wrap" id="inline-volume-wrap">
+                        <button class="tb-btn" id="btn-inline-mute" title="Mute / Unmute (M)" onclick="window.VidAmpApp.toggleMute()">
+                            <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        </button>
+                        <div class="volume-slider-bar">
+                            <input type="range" id="inline-volume-slider" min="0" max="20" step="1" value="20" title="Volume (0 - 20)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VidAmp Enhancer Toolbar -->
+                <div id="enhancer-toolbar">
+                    <button class="tb-btn" id="tb-loop" title="Loop Whole Video">
+                        <svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-volboost" title="Volume Boost (Click 150% / 200%)">
+                        <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/><path d="M13 2l2 4-3 1 3 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-bass" title="Studio EQ (Click: Bass +7dB, Right-Click: Vocal +6dB)">
+                        <svg viewBox="0 0 24 24"><path d="M4 10v4M8 6v12M12 2v20M16 6v12M20 10v4"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-audio-track" title="Multi-Track Audio Switcher (B: Cycle, Right-Click: List)" style="display: none;">
+                        <svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                        <span id="tb-audio-track-badge" class="tb-badge">UND</span>
+                    </button>
+                    <button class="tb-btn" id="tb-speech" title="Night Mode Dialogue Clarity (N) — Compresses loud peaks & boosts speech" onclick="window.VidAmpAudio.toggleNightModeDialogue((msg) => window.VidAmpApp.showToast(msg))">
+                        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M12 8v4m0 3h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+
+                    <div class="tb-sep"></div>
+
+                    <button class="tb-btn" id="tb-cinema" title="Cinema Mode (Dim Lights)">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M3 7h2M19 7h2M3 17h2M19 17h2"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-ambient" title="Universal Ambient Glow (Bias Lighting)">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-theater" title="Fullscreen (F)">
+                        <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-pip" title="Picture-in-Picture (P)">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="11" width="8" height="7" rx="1.5" fill="rgba(255,255,255,0.2)"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-mini-pip" title="Always-On-Top Mini PiP Controller (Shift+P)">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="11" y="11" width="8" height="8" rx="1" fill="currentColor"/><polyline points="13 7 17 7 17 11"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-aspect" title="Aspect Ratio (21:9 Ultrawide / Stretch / 16:9 Fit / 4:3)">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="17" y1="5" x2="17" y2="19"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-rotate" title="Rotate Video 90° (Shift+R, Right-Click: Mirror Flip Shift+M)">
+                        <svg viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+
+                    <div class="tb-sep"></div>
+
+                    <!-- Speed Pill & Popover -->
+                    <button class="tb-btn tb-speed-btn" id="tb-speed" title="Playback Speed (Click: Menu, Right-Click: 1×, Wheel: Smooth)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4a8 8 0 0 0-8 8c0 2.2.9 4.2 2.3 5.7L12 12l5.7 5.7A7.96 7.96 0 0 0 20 12a8 8 0 0 0-8-8z"/><line x1="12" y1="12" x2="15" y2="8" stroke-width="2.2"/></svg>
+                        <span id="tb-speed-val">1×</span>
+                    </button>
+
+                    <div id="speed-popover">
+                        <div class="sp-list">
+                            <span class="sp-pill" data-speed="0.25" onclick="window.VidAmpSpeed.setPlaybackRate(0.25)">0.25×</span>
+                            <span class="sp-pill" data-speed="0.5" onclick="window.VidAmpSpeed.setPlaybackRate(0.5)">0.5×</span>
+                            <span class="sp-pill" data-speed="0.75" onclick="window.VidAmpSpeed.setPlaybackRate(0.75)">0.75×</span>
+                            <span class="sp-pill active" data-speed="1.0" onclick="window.VidAmpSpeed.setPlaybackRate(1.0)">1×</span>
+                            <span class="sp-pill" data-speed="1.25" onclick="window.VidAmpSpeed.setPlaybackRate(1.25)">1.25×</span>
+                            <span class="sp-pill" data-speed="1.4" onclick="window.VidAmpSpeed.setPlaybackRate(1.4)">1.4×</span>
+                            <span class="sp-pill" data-speed="1.5" onclick="window.VidAmpSpeed.setPlaybackRate(1.5)">1.5×</span>
+                            <span class="sp-pill" data-speed="1.75" onclick="window.VidAmpSpeed.setPlaybackRate(1.75)">1.75×</span>
+                            <span class="sp-pill" data-speed="2.0" onclick="window.VidAmpSpeed.setPlaybackRate(2.0)">2×</span>
+                            <span class="sp-pill" data-speed="2.5" onclick="window.VidAmpSpeed.setPlaybackRate(2.5)">2.5×</span>
+                            <span class="sp-pill" data-speed="3.0" onclick="window.VidAmpSpeed.setPlaybackRate(3.0)">3×</span>
+                            <span class="sp-pill" data-speed="4.0" onclick="window.VidAmpSpeed.setPlaybackRate(4.0)">4×</span>
+                        </div>
+                    </div>
+
+                    <button class="tb-btn" id="tb-filters" title="Video Filters (Cycle HDR / Night / Contrast)">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" fill="currentColor"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-screenshot" title="Capture High-Res Frame Screenshot">
+                        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-abloop" title="A-B Loop (Click: Set A, Set B, Clear; Right-Click: Export Clip)">
+                        <svg viewBox="0 0 24 24"><path d="M10 2v6L4.5 18A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-3L14 8V2h-4z"/><path d="M8.5 14h7"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-clip-export" title="1-Click GIF / MP4 Clip Export (Shift+E)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                    </button>
+                    <button class="tb-btn" id="tb-bookmark" title="Bookmark Timestamp (Click: List, Right-Click: Add)">
+                        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+
+                    <div id="bookmark-popover">
+                        <div class="bm-list" id="bookmark-list-container">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+
+                    <button class="tb-btn" id="tb-sleep" title="Sleep Timer (15m/30m/45m/60m/End/Off)">
+                        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+
+                    <div class="tb-sep"></div>
+
+                    <button class="tb-btn" id="tb-settings" title="Pro Studio Equalizer & Filters (Alt+B)">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                </div>
+
+                <div class="control-group-right">
+                    <button class="tb-btn" id="btn-toggle-subtitles" title="Subtitles (V)" onclick="window.VidAmpSubtitles && window.VidAmpSubtitles.toggleSubtitles(window.VidAmpApp.showToast)">
+                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M7 10h10M7 13h6"/></svg>
+                    </button>
+                    <button class="tb-btn" id="btn-auto-subtitles-dock" title="Auto-Fetch Subtitles (Ctrl+Shift+S)" onclick="window.VidAmpApp.openAutoFetchSubtitles()">
+                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8 11h6M8 14h4"/></svg>
+                    </button>
+                    <button class="tb-btn" title="Toggle Fullscreen (F / Double Click)" onclick="window.VidAmpApp.toggleFullscreen()">
+                        <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Playlist & Queue Drawer -->
+    <aside class="drawer" id="playlist-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Playlist & Queue
+            </span>
+            <div style="display: flex; gap: 4px;">
+                <button class="window-btn" title="Export M3U Playlist" onclick="window.VidAmpPlaylist.exportM3U()">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button class="window-btn" id="btn-close-playlist" title="Close Playlist" onclick="window.VidAmpApp.closeDrawer('playlist-drawer')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="drawer-content">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" style="flex: 1; padding: 7px 10px; font-size: 11px;" onclick="window.VidAmpApp.openFilePicker()">+ Add Files</button>
+                <button class="btn-secondary" style="flex: 1; padding: 7px 10px; font-size: 11px;" onclick="window.VidAmpApp.openFolderPicker()">+ Add Folder</button>
+            </div>
+            <div id="playlist-items-container">
+                <!-- Dynamically rendered -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Recent Media & Watch History Drawer -->
+    <aside class="drawer" id="history-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Watch History & Recents
+            </span>
+            <div style="display: flex; gap: 4px;">
+                <button class="window-btn" title="Clear All History" onclick="window.VidAmpApp.clearWatchHistory()">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+                <button class="window-btn" id="btn-close-history" title="Close History (Esc)" onclick="window.VidAmpApp.closeDrawer('history-drawer')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="drawer-content">
+            <div id="history-items-container">
+                <!-- Dynamically rendered -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Studio Equalizer, VLC Sync & Post-Processing Drawer -->
+    <aside class="drawer" id="eq-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                Studio Equalizer & Filters
+            </span>
+            <button class="window-btn" id="btn-close-eq" title="Close Panel (Esc)" onclick="window.VidAmpApp.closeDrawer('eq-drawer')">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="drawer-content">
+            <!-- Spectrum Visualizer -->
+            <div class="hud-section">
+                <span class="hud-label">Spectrum Visualizer</span>
+                <canvas id="audio-visualizer-canvas" width="300" height="44"></canvas>
+            </div>
+
+            <!-- Volume Boost (Up to 250%) -->
+            <div class="hud-section">
+                <span class="hud-label">
+                    <span>Master Audio Boost</span>
+                    <span id="hud-vol-val" class="hud-val-text">100%</span>
+                </span>
+                <div class="hud-slider-row">
+                    <input type="range" class="hud-slider" id="hud-vol-slider" min="0" max="250" value="100" oninput="
+                        const v = this.value / 100;
+                        document.getElementById('hud-vol-val').textContent = this.value + '%';
+                        window.VidAmpAudio.applyVolume(v);
+                    ">
+                </div>
+            </div>
+
+            <!-- Audio & Subtitle Sync Offset (VLC Style) -->
+            <div class="hud-section">
+                <span class="hud-label">VLC Track Synchronization</span>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+                        <span>Audio Delay (J / K):</span>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button class="sp-pill" onclick="window.VidAmpAudio.adjustAudioDelay(-50, window.VidAmpApp.showToast)">-50ms</button>
+                            <button class="sp-pill" onclick="window.VidAmpAudio.adjustAudioDelay(50, window.VidAmpApp.showToast)">+50ms</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+                        <span>Subtitle Delay (G / H):</span>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button class="sp-pill" onclick="window.VidAmpSubtitles.adjustDelay(-50, window.VidAmpApp.showToast)">-50ms</button>
+                            <button class="sp-pill" onclick="window.VidAmpSubtitles.adjustDelay(50, window.VidAmpApp.showToast)">+50ms</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Presets -->
+            <div class="hud-section">
+                <span class="hud-label">Audio EQ Presets</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('flat'); window.VidAmpApp.showToast('EQ: Flat');">Flat</button>
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('bass'); window.VidAmpApp.showToast('EQ: Bass Boost (+7dB)');">Bass Heavy</button>
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('vocal'); window.VidAmpApp.showToast('EQ: Vocal Clarity (+6dB)');">Vocal Clarity</button>
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('movie'); window.VidAmpApp.showToast('EQ: Movie Dialogue');">Movie Dialogue</button>
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('rock'); window.VidAmpApp.showToast('EQ: Rock');">Rock</button>
+                    <button class="sp-pill" onclick="window.VidAmpAudio.applyPreset('night'); window.VidAmpApp.showToast('EQ: Night Cinema');">Night Mode</button>
+                </div>
+            </div>
+
+            <!-- Multi-Track Audio Languages (Dual-Audio) -->
+            <div class="hud-section" id="eq-audio-tracks-section">
+                <span class="hud-label">Multi-Track Audio Languages (Dual-Audio)</span>
+                <div id="eq-audio-tracks-list" style="display: flex; flex-direction: column; gap: 4px;">
+                    <span style="font-size: 11px; color: var(--text-muted);">Default Media Audio (Track 1)</span>
+                </div>
+            </div>
+
+            <!-- ⚡ HDR Passthrough & Tone Mapping -->
+            <div class="hud-section" id="eq-hdr-section">
+                <span class="hud-label">
+                    <span>⚡ HDR Passthrough & Dynamic Tone Mapping</span>
+                    <button style="background:transparent;border:none;color:var(--accent-cyan);cursor:pointer;font-size:10px;" onclick="window.VidAmpApp.openGpuDiagnostics()">GPU STATS</button>
+                </span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                    <button class="sp-pill hdr-mode-pill active" data-mode="off" onclick="window.VidAmpFilters.setHdrMode('off', window.VidAmpApp.showToast)">SDR (Standard)</button>
+                    <button class="sp-pill hdr-mode-pill" data-mode="bt2020" onclick="window.VidAmpFilters.setHdrMode('bt2020', window.VidAmpApp.showToast)">BT.2020 Tone-Map</button>
+                    <button class="sp-pill hdr-mode-pill" data-mode="cinema" onclick="window.VidAmpFilters.setHdrMode('cinema', window.VidAmpApp.showToast)">Cinema Peak HDR</button>
+                    <button class="sp-pill hdr-mode-pill" data-mode="oled" onclick="window.VidAmpFilters.setHdrMode('oled', window.VidAmpApp.showToast)">OLED True Black</button>
+                </div>
+            </div>
+
+            <!-- Video Geometry & Mirror Flip (VLC / MPC-HC) -->
+            <div class="hud-section">
+                <span class="hud-label">Video Geometry & Rotation</span>
+                <div style="display: flex; gap: 6px;">
+                    <button class="sp-pill" style="flex: 1;" onclick="window.VidAmpFilters.rotateClockwise(window.VidAmpApp.showToast)">Rotate 90°</button>
+                    <button class="sp-pill" style="flex: 1;" onclick="window.VidAmpFilters.toggleFlipHorizontal(window.VidAmpApp.showToast)">Mirror Flip</button>
+                    <button class="sp-pill" style="flex: 1;" onclick="window.VidAmpSpeed.togglePitchPreservation(window.VidAmpApp.showToast)">Pitch Lock</button>
+                </div>
+            </div>
+
+            <!-- Video Filters -->
+            <div class="hud-section">
+                <span class="hud-label">
+                    <span>Color Adjustments</span>
+                    <button style="background:transparent;border:none;color:var(--accent-cyan);cursor:pointer;font-size:10px;" onclick="window.VidAmpFilters.reset(window.VidAmpApp.showToast)">RESET</button>
+                </span>
+                
+                <div class="hud-slider-row">
+                    <span style="font-size: 11px; width: 65px; color: var(--text-secondary);">Brightness</span>
+                    <input type="range" class="hud-slider" min="20" max="200" value="100" oninput="
+                        window.VidAmpFilters.filters.brightness = Number(this.value);
+                        window.VidAmpFilters.apply();
+                    ">
+                </div>
+
+                <div class="hud-slider-row">
+                    <span style="font-size: 11px; width: 65px; color: var(--text-secondary);">Contrast</span>
+                    <input type="range" class="hud-slider" min="20" max="200" value="100" oninput="
+                        window.VidAmpFilters.filters.contrast = Number(this.value);
+                        window.VidAmpFilters.apply();
+                    ">
+                </div>
+
+                <div class="hud-slider-row">
+                    <span style="font-size: 11px; width: 65px; color: var(--text-secondary);">Saturation</span>
+                    <input type="range" class="hud-slider" min="0" max="200" value="100" oninput="
+                        window.VidAmpFilters.filters.saturate = Number(this.value);
+                        window.VidAmpFilters.apply();
+                    ">
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Shortcut Cheat Sheet Modal -->
+    <div class="modal-backdrop" id="shortcuts-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span style="font-weight: 700; font-size: 14px;">⚡ VidAmp, VLC & MPC-HC Master Shortcuts</span>
+                <button class="window-btn" onclick="document.getElementById('shortcuts-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Play / Pause</span>
+                    <span class="shortcut-key">Space</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Snap Speed Down (0.25 Grid)</span>
+                    <span class="shortcut-key">[</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Snap Speed Up (0.25 Grid)</span>
+                    <span class="shortcut-key">]</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Reset Speed to 1.0×</span>
+                    <span class="shortcut-key">R</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Two-Finger Volume Scroll</span>
+                    <span class="shortcut-key">Touchpad Up / Down</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Horizontal Swipe Seek</span>
+                    <span class="shortcut-key">Touchpad Left / Right</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Hold-to-2× Boost</span>
+                    <span class="shortcut-key">Long Click Video</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Step Frame Forward</span>
+                    <span class="shortcut-key">. / &gt;</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Step Frame Backward</span>
+                    <span class="shortcut-key">, / &lt;</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Audio Delay Sync (VLC)</span>
+                    <span class="shortcut-key">J / K</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Subtitle Delay Sync (VLC)</span>
+                    <span class="shortcut-key">G / H</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Toggle Subtitles</span>
+                    <span class="shortcut-key">V</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Stream HUD Stats (MPC-HC)</span>
+                    <span class="shortcut-key">I</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Window Scale 50% / 100% / 200%</span>
+                    <span class="shortcut-key">Alt + 1 / 2 / 3</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Jump ±5s / ±10s / ±60s</span>
+                    <span class="shortcut-key">← / → | Alt / Ctrl</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Jump to Specific Time</span>
+                    <span class="shortcut-key">Ctrl + J / T</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Universal Ambient Glow</span>
+                    <span class="shortcut-key">Shift + A</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Timestamp Bookmark</span>
+                    <span class="shortcut-key">Shift + B</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Cycle Sleep Timer</span>
+                    <span class="shortcut-key">Shift + S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Fullscreen / Browser PiP</span>
+                    <span class="shortcut-key">F / P</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Always-On-Top Mini PiP Controller</span>
+                    <span class="shortcut-key">Shift + P</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">1-Click GIF / MP4 Clip Export</span>
+                    <span class="shortcut-key">Shift + E</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Auto-Fetch Online Subtitles</span>
+                    <span class="shortcut-key">Ctrl + Shift + S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Switch Audio Language Track</span>
+                    <span class="shortcut-key">B</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Cycle HDR Tone-Mapping Curves</span>
+                    <span class="shortcut-key">Shift + H</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Watch History & Recents</span>
+                    <span class="shortcut-key">Ctrl + H</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Night Mode Dialogue Clarity</span>
+                    <span class="shortcut-key">N</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Hold-to-Boost 2× Speed</span>
+                    <span class="shortcut-key">Hold Spacebar</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Pro Tools Drawer / Dock</span>
+                    <span class="shortcut-key">Alt + B / Alt + T</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Open Network Stream</span>
+                    <span class="shortcut-key">Ctrl + N</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Rotate Video 90°</span>
+                    <span class="shortcut-key">Shift + R</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Mirror Flip Horizontal</span>
+                    <span class="shortcut-key">Shift + M</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Jump ±10s (Gesture)</span>
+                    <span class="shortcut-key">Double-Tap Left / Right</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Playback Speed (Gesture)</span>
+                    <span class="shortcut-key">Touchpad Scroll (Left Side)</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Volume (Gesture)</span>
+                    <span class="shortcut-key">Touchpad Scroll (Right Side)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VLC-Style Network Stream Modal (Ctrl+N) -->
+    <div class="modal-backdrop" id="network-stream-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="width: 520px; max-width: 92vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span style="font-weight: 700; font-size: 14px;">Open Network Stream (VLC Style)</span>
+                </div>
+                <button class="window-btn" onclick="document.getElementById('network-stream-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <label style="font-size: 12px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px;">
+                    <span>Please enter a network URL (HLS .m3u8, direct HTTP/HTTPS video, or live stream):</span>
+                    <input type="url" id="network-stream-url-input" placeholder="https://example.com/stream.m3u8" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-cyan)'" onblur="this.style.borderColor='var(--border-subtle)'" onkeydown="if(event.key==='Enter') window.VidAmpApp.submitNetworkStream()">
+                </label>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Test Streams:</span>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button class="sp-pill" type="button" onclick="document.getElementById('network-stream-url-input').value='https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'">Big Buck Bunny (HLS)</button>
+                        <button class="sp-pill" type="button" onclick="document.getElementById('network-stream-url-input').value='https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'">Direct MP4 (Google)</button>
+                        <button class="sp-pill" type="button" onclick="document.getElementById('network-stream-url-input').value='https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8'">Apple BipBop (HLS)</button>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+                    <button class="btn-secondary" type="button" onclick="document.getElementById('network-stream-modal').classList.remove('open')">Cancel</button>
+                    <button class="btn-primary" type="button" id="btn-submit-stream" onclick="window.VidAmpApp.submitNetworkStream()">▶ Play Stream</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jump to Time Modal (Ctrl+J / Ctrl+T) -->
+    <div class="modal-backdrop" id="jump-time-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="width: 380px; max-width: 90vw;">
+            <div class="modal-header">
+                <span style="font-weight: 700; font-size: 14px;">⏱️ Jump to Specific Time</span>
+                <button class="window-btn" onclick="document.getElementById('jump-time-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <label style="font-size: 12px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px;">
+                    <span>Enter timestamp (e.g. 1:23, 01:23:45, or seconds):</span>
+                    <input type="text" id="jump-time-input" placeholder="01:30" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: #fff; font-size: 14px; font-weight: 600; outline: none;" onkeydown="if(event.key==='Enter') window.VidAmpApp.submitJumpToTime()">
+                </label>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn-secondary" type="button" onclick="document.getElementById('jump-time-modal').classList.remove('open')">Cancel</button>
+                    <button class="btn-primary" type="button" onclick="window.VidAmpApp.submitJumpToTime()">Jump</button>
+                </div>
+            </div>
+        </div>
+    <!-- 🔎 Auto-Fetch Subtitles Modal (OpenSubtitles) -->
+    <div class="modal-backdrop" id="subtitles-search-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="width: 580px; max-width: 94vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8 11h6M8 14h4"/></svg>
+                    <span style="font-weight: 700; font-size: 14px;">🔎 Auto-Fetch Subtitles (OpenSubtitles)</span>
+                </div>
+                <button class="window-btn" onclick="document.getElementById('subtitles-search-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="sub-search-query-input" placeholder="Movie or video title (e.g. Inception 2010)" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none;" onkeydown="if(event.key==='Enter') window.VidAmpSubtitles.searchOnline(this.value, document.getElementById('sub-search-lang-select').value, window.VidAmpApp.showToast)">
+                    <select id="sub-search-lang-select" style="background: rgba(20,24,35,0.9); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 12px; outline: none; cursor: pointer;">
+                        <option value="all">All Languages</option>
+                        <option value="eng" selected>English (eng)</option>
+                        <option value="spa">Spanish (spa)</option>
+                        <option value="fre">French (fre)</option>
+                        <option value="ger">German (ger)</option>
+                        <option value="ita">Italian (ita)</option>
+                        <option value="por">Portuguese (por)</option>
+                        <option value="jpn">Japanese (jpn)</option>
+                        <option value="chi">Chinese (chi)</option>
+                        <option value="hin">Hindi (hin)</option>
+                        <option value="ara">Arabic (ara)</option>
+                        <option value="rus">Russian (rus)</option>
+                        <option value="kor">Korean (kor)</option>
+                        <option value="tur">Turkish (tur)</option>
+                    </select>
+                    <button class="btn-primary" type="button" style="padding: 8px 16px;" onclick="window.VidAmpSubtitles.searchOnline(document.getElementById('sub-search-query-input').value, document.getElementById('sub-search-lang-select').value, window.VidAmpApp.showToast)">Search</button>
+                </div>
+                <!-- Results List -->
+                <div id="sub-search-results" class="sub-results-list" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✂️ 1-Click GIF / Clip Export Modal -->
+    <div class="modal-backdrop" id="clip-export-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="width: 480px; max-width: 92vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                    <span style="font-weight: 700; font-size: 14px;">✂️ 1-Click GIF & Clip Exporter</span>
+                </div>
+                <button class="window-btn" onclick="document.getElementById('clip-export-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                        <span style="color: var(--text-secondary);">Export Segment:</span>
+                        <span id="clip-export-dur" class="tb-badge" style="background: rgba(56,189,248,0.2); color: #38bdf8;">0.0s</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="flex: 1; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                            <span>Start Point A (sec):</span>
+                            <input type="number" id="clip-export-start" step="0.1" min="0" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 7px 10px; color: #fff; font-size: 12px; outline: none;">
+                        </label>
+                        <span style="align-self: flex-end; padding-bottom: 8px; color: var(--text-muted);">→</span>
+                        <label style="flex: 1; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                            <span>End Point B (sec):</span>
+                            <input type="number" id="clip-export-end" step="0.1" min="0" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 7px 10px; color: #fff; font-size: 12px; outline: none;">
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <label style="font-size: 11px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                        <span>Export Format:</span>
+                        <select id="clip-export-format" style="background: rgba(20,24,35,0.9); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">
+                            <option value="mp4" selected>🎬 MP4 Video (H.264 / AAC)</option>
+                            <option value="gif">🎞️ Animated GIF (Palette)</option>
+                            <option value="webm">🎥 WebM Video (VP9)</option>
+                        </select>
+                    </label>
+
+                    <label style="font-size: 11px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                        <span>Resolution:</span>
+                        <select id="clip-export-res" style="background: rgba(20,24,35,0.9); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">
+                            <option value="original" selected>Full Resolution</option>
+                            <option value="720p">720p HD</option>
+                            <option value="480p">480p SD</option>
+                            <option value="360p">360p Compact</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="clip-export-status"></div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
+                    <button class="btn-secondary" type="button" onclick="document.getElementById('clip-export-modal').classList.remove('open')">Cancel</button>
+                    <button class="btn-primary" type="button" id="btn-run-export-clip" onclick="window.VidAmpTools.runClipExport()">✂️ Export Segment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚡ Hardware Acceleration & HDR Passthrough Modal -->
+    <div class="modal-backdrop" id="gpu-diagnostics-modal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="width: 500px; max-width: 92vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #38bdf8; font-size: 16px;">⚡</span>
+                    <span style="font-weight: 700; font-size: 14px;">Hardware Acceleration & HDR Passthrough</span>
+                </div>
+                <button class="window-btn" onclick="document.getElementById('gpu-diagnostics-modal').classList.remove('open')">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">GPU Acceleration:</span>
+                        <span id="gpu-diag-status" style="font-weight: 600; color: var(--accent-emerald);">● Checking...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">Graphics Adapter:</span>
+                        <span id="gpu-diag-name" style="font-weight: 500; color: #fff; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Direct3D 11</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">Video Decoding:</span>
+                        <span id="gpu-diag-decode" style="font-weight: 500; color: var(--accent-cyan);">Hardware Decoding (NVDEC / VAAPI)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-secondary);">Renderer Stats:</span>
+                        <span id="gpu-diag-frames" style="font-weight: 500; color: #cbd5e1;">Smooth 60 FPS</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">HDR Passthrough & Dynamic Tone Mapping:</span>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <button class="sp-pill hdr-mode-pill active" data-mode="off" onclick="window.VidAmpFilters.setHdrMode('off', window.VidAmpApp.showToast)">SDR (Standard)</button>
+                        <button class="sp-pill hdr-mode-pill" data-mode="bt2020" onclick="window.VidAmpFilters.setHdrMode('bt2020', window.VidAmpApp.showToast)">BT.2020 Tone-Map</button>
+                        <button class="sp-pill hdr-mode-pill" data-mode="cinema" onclick="window.VidAmpFilters.setHdrMode('cinema', window.VidAmpApp.showToast)">Cinema Peak HDR</button>
+                        <button class="sp-pill hdr-mode-pill" data-mode="oled" onclick="window.VidAmpFilters.setHdrMode('oled', window.VidAmpApp.showToast)">OLED True Black</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                    <button class="btn-primary" type="button" onclick="document.getElementById('gpu-diagnostics-modal').classList.remove('open')">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📌 Always-On-Top Mini PiP Floating Titlebar Overlay -->
+    <div id="mini-pip-floating-bar" class="mini-pip-bar">
+        <div class="mini-pip-drag">
+            <span class="mini-pip-badge">PiP</span>
+            <span class="mini-pip-title" id="mini-pip-title">VidAmp Floating Player</span>
+        </div>
+        <div class="mini-pip-actions">
+            <button class="window-btn mini-pip-btn" id="mini-pip-restore-btn" title="Restore Full Window" onclick="window.VidAmpApp.toggleMiniPip()">
+                <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+            <button class="window-btn mini-pip-btn" title="Close" onclick="window.VidAmpApp.toggleMiniPip()">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "name": "vidamp-player",
+  "productName": "VidAmp Player",
+  "version": "1.0.0",
+  "description": "Modern, high-performance standalone PC Video Player desktop app combining VidAmp precision controls with VLC and MPC-HC power features.",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "package": "npx @electron/packager . \"VidAmp Player\" --platform=win32 --arch=x64 --out=dist-app --overwrite --icon=public/icons/icon.ico --asar --prune=true --ignore=\"^(src|docs|screenshots|.git|.vscode|dist-app)\"",
+    "start": "electron electron/main.js",
+    "app": "vite build && electron electron/main.js"
+  },
+  "keywords": [
+    "video-player",
+    "vidamp",
+    "electron",
+    "vite",
+    "vlc",
+    "mpc-hc",
+    "ambient-glow",
+    "speed-controller",
+    "web-audio"
+  ],
+  "author": "VidAmp Team",
+  "license": "MIT",
+  "dependencies": {
+    "hls.js": "^1.5.17"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "vite": "^6.0.0"
+  }
+}

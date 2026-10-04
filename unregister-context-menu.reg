@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+[-HKEY_CURRENT_USER\Software\Classes\*\shell\PlayWithVidAmp]
+[-HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\video\shell\PlayWithVidAmp]
+[-HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\audio\shell\PlayWithVidAmp]
+[-HKEY_CURRENT_USER\Software\Classes\Directory\shell\PlayWithVidAmp]
+[-HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PlayWithVidAmp]

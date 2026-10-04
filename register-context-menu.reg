@@ -1,0 +1,36 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\PlayWithVidAmp]
+@="Play with VidAmp Player"
+"Icon"="C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\PlayWithVidAmp\command]
+@="\"C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe\" \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\video\shell\PlayWithVidAmp]
+@="Play with VidAmp Player"
+"Icon"="C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\video\shell\PlayWithVidAmp\command]
+@="\"C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe\" \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\audio\shell\PlayWithVidAmp]
+@="Play with VidAmp Player"
+"Icon"="C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\audio\shell\PlayWithVidAmp\command]
+@="\"C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe\" \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\PlayWithVidAmp]
+@="Play folder in VidAmp Player"
+"Icon"="C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\PlayWithVidAmp\command]
+@="\"C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe\" \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PlayWithVidAmp]
+@="Play folder in VidAmp Player"
+"Icon"="C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PlayWithVidAmp\command]
+@="\"C:\\Users\\crs14\\.gemini\\antigravity\\scratch\\vidamp-desktop-player\\dist-app\\VidAmp Player-win32-x64\\VidAmp Player.exe\" \"%V\""

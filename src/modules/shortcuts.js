@@ -405,5 +405,16 @@ export class ShortcutsManager {
                 }
             }
         });
+
+        // Mouse Forward (button 4) and Back (button 3) side button seeking
+        window.addEventListener('mouseup', e => {
+            if (e.button === 4) {
+                e.preventDefault();
+                if (window.VidAmpApp) window.VidAmpApp.seekDelta(5);
+            } else if (e.button === 3) {
+                e.preventDefault();
+                if (window.VidAmpApp) window.VidAmpApp.seekDelta(-5);
+            }
+        });
     }
 }

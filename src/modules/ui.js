@@ -72,14 +72,14 @@ export class UIController {
         }
 
         const scheduleAutohide = (e) => {
-            // Do NOT reveal top or bottom bars on Spacebar press/hold
+            // Do NOT reveal top or bottom bars on ANY keyboard keypress (forward ->, rewind <-, spacebar, volume, shortcuts)!
             if (e && e.type === 'keydown') {
-                const isSpace = e.code === 'Space' || e.key === ' ' || e.keyCode === 32;
-                if (isSpace) return;
+                return;
             }
 
-            // Do NOT reveal top or bottom bars when clicking or pressing on the video stage / video area!
+            // Do NOT reveal top or bottom bars when clicking or pressing on the video stage / video area, or using mouse side buttons!
             if (e && e.type === 'mousedown') {
+                if (e.button !== 0) return;
                 if (e.target && (e.target.closest('#video-stage') || e.target.closest('#video-element') || e.target.closest('#ambient-glow-canvas') || e.target.closest('#cinema-overlay') || e.target.closest('#subtitle-overlay'))) {
                     return;
                 }
@@ -163,7 +163,6 @@ export class UIController {
 
         window.addEventListener('mousemove', scheduleAutohide);
         window.addEventListener('mousedown', scheduleAutohide);
-        window.addEventListener('keydown', scheduleAutohide);
 
         // ONLY show the Exit Fullscreen pill when the user brings their mouse to the TOP-MIDDLE of the screen
         window.addEventListener('mousemove', (e) => {

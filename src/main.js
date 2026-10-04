@@ -487,6 +487,18 @@ class VidAmpPlayerApp {
         // Click on video to play/pause (or dismiss open drawers)
         this.video.addEventListener('click', (e) => {
             if (e.target.closest('#below-video-dock') || e.target.closest('#enhancer-toolbar')) return;
+
+            // Guard against long-press 2x release: NEVER pause on releasing 2x!
+            if (window.VidAmpSpeed && (window.VidAmpSpeed.suppressNextClick || (Date.now() - (window.VidAmpSpeed.lastHoldBoostEndTime || 0) < 500))) {
+                if (window.VidAmpSpeed) window.VidAmpSpeed.suppressNextClick = false;
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                e.stopPropagation();
+                return;
+            }
+
             const openDrawer = document.querySelector('.drawer.open');
             if (openDrawer) {
                 this.closeAllModals();

@@ -278,11 +278,16 @@ export class SpeedController {
         this.video.playbackRate = this.holdBoostRestoreRate;
         this.currentRate = this.holdBoostRestoreRate;
 
-        if (this.holdBoostWasPaused) {
-            this.video.pause();
+        // User requirement: Releasing 2x must NEVER pause the video!
+        // Ensure the video continues playing smoothly without interruption
+        if (this.video.paused) {
+            this.video.play().catch(() => {});
         }
 
         this.holdBoostEngaged = false;
+        this.suppressNextClick = true;
+        this.lastHoldBoostEndTime = Date.now();
+
         const indicator = document.getElementById('hold-boost-indicator');
         if (indicator) indicator.classList.remove('visible');
 
@@ -294,20 +299,46 @@ export class SpeedController {
         const viewport = document.getElementById('video-stage');
         if (!viewport) return;
 
+        this.mouseDownTime = 0;
+        this.lastHoldBoostEndTime = 0;
+        this.suppressNextClick = false;
+
         viewport.addEventListener('mousedown', e => {
-            if (e.button !== 0 || e.target.closest('#below-video-dock') || e.target.closest('.drawer')) {
+            if (e.button !== 0 || e.target.closest('#below-video-dock') || e.target.closest('.drawer') || e.target.closest('.modal-backdrop')) {
                 return;
             }
+            this.mouseDownTime = Date.now();
+            clearTimeout(this.holdTimer);
             this.holdTimer = setTimeout(() => {
                 this.startHoldBoost();
-            }, 300);
+            }, 250);
         });
 
         window.addEventListener('mouseup', () => {
             clearTimeout(this.holdTimer);
+            const heldDuration = this.mouseDownTime ? (Date.now() - this.mouseDownTime) : 0;
+
             if (this.holdBoostEngaged) {
                 this.endHoldBoost();
+                this.suppressNextClick = true;
+                this.lastHoldBoostEndTime = Date.now();
+            } else if (heldDuration >= 250) {
+                // If held longer than tap threshold, mark as long press release so click doesn't pause
+                this.suppressNextClick = true;
+                this.lastHoldBoostEndTime = Date.now();
             }
+            this.mouseDownTime = 0;
         });
+
+        // Capture phase to intercept and suppress the trailing click event after a long-press release
+        window.addEventListener('click', e => {
+            const timeSinceHoldEnd = Date.now() - this.lastHoldBoostEndTime;
+            if (this.suppressNextClick || timeSinceHoldEnd < 450) {
+                this.suppressNextClick = false;
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            }
+        }, true);
     }
 }
